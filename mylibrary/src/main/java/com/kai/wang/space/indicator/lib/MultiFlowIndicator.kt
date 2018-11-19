@@ -25,7 +25,7 @@ import android.widget.OverScroller
  */
 class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     private lateinit var mViewPager: ViewPager
-    private var mSpaceFlowAdapter: MultiFlowAdapter? = null
+    private var mSpaceFlowAdapter: MultiFlowAdapter<Any>? = null
     private val mTitles by lazy { mutableListOf<String>() }
 
     private val mScreenWidth: Int
@@ -81,6 +81,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     private val mOverScroller by lazy { OverScroller(context) }
     private lateinit var mVelocityTracker: VelocityTracker
     private var mMode = MODE.HORIZONL
+    private var mPreSelectedTab = 0
     private var mCurrentTab = 0
     private var mCurrentTabOffsetPixel = 0
     private var mCurrentTabOffset = 0f
@@ -182,7 +183,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        if (childCount > mCurrentTab + 1) {
+        if (childCount > mCurrentTab) {
             val drawChildView = getChildAt(mCurrentTab)
 
             canvas?.drawRect(
@@ -575,6 +576,19 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
             }
 
             override fun onPageSelected(p0: Int) {
+                mSpaceFlowAdapter?.apply {
+                    if (mPreSelectedTab != p0) {
+                        this.onSelected(this.getView(this@MultiFlowIndicator, p0, this.getItem(p0)), p0)
+                        this.unSelected(
+                            this.getView(
+                                this@MultiFlowIndicator,
+                                mPreSelectedTab,
+                                this.getItem(mPreSelectedTab)
+                            ), mPreSelectedTab
+                        )
+                    }
+                }
+                mPreSelectedTab = p0
             }
         })
 
@@ -651,8 +665,19 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         }
     }
 
-    fun setAdapter(spaceFlowAdapter: MultiFlowAdapter) {
+    fun setAdapter(spaceFlowAdapter: MultiFlowAdapter<Any>) {
         this.mSpaceFlowAdapter = spaceFlowAdapter
+        mSpaceFlowAdapter?.let {
+            removeAllViews()
+            for (index in 0 until it.getItemCount()) {
+                val view = it.getView(this, index, it.getItem(index))
+                view.layoutParams = generateDefaultLayoutParams()
+                addView(view)
+//                view.setOnClickListener {
+//                    mViewPager.currentItem = index
+//                }
+            }
+        }
     }
 
 

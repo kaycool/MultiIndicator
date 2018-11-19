@@ -1,19 +1,22 @@
 package com.kai.wang.space.indicator.lib
 
 import android.view.View
-import android.view.ViewGroup
+
 
 /**
  * @author kai.w
  * @des  $des
  */
-interface MultiFlowAdapter {
+interface MultiFlowAdapter<T> {
+//    private val mMutiDatas = mutableListOf<T>()
 
-    fun onCreateIndicatorView(parent: ViewGroup): View
+    fun getView(parent: MultiFlowIndicator, position: Int, t: T): View
 
-    fun selectView(view: View, position: Int)
+    fun onSelected(view: View, position: Int)
 
-    fun unSelectView(view: View, position: Int)
+    fun unSelected(view: View, position: Int)
 
-    fun getItemCount(): Int = 0
+    fun getItem(position: Int): T
+
+    fun getItemCount(): Int
 }
