@@ -9,7 +9,6 @@ import android.view.ViewGroup
  */
 interface MultiFlowAdapter {
 
-
     fun onCreateIndicatorView(parent: ViewGroup): View
 
     fun onBindView(view: View, position: Int)
