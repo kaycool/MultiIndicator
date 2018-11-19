@@ -514,7 +514,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
 
             override fun onPageScrolled(p0: Int, p1: Float, p2: Int) {
                 Log.d(TAG, "onPageScrolled p0=$p0  p1=$p1  p2=$p2")
-                val scrollChildIndex = if (mCurrentTab == p0 && mCurrentTabOffset < p1) {//右翻
+
+                val scrollChildIndex = if (p0 == mCurrentTab && mCurrentTabOffset < p1) {//右翻
                     p0 + 1
                 } else {
                     p0
@@ -522,13 +523,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
 
                 when (mMode) {
                     MODE.HORIZONL -> {
-                        if (childCount > scrollChildIndex + 1) {
+                        if (childCount > scrollChildIndex) {
                             val childView = getChildAt(scrollChildIndex)
                             val centerLeftX = childView.left + childView.measuredWidth.toFloat() / 2
                             var dx = (centerLeftX - mScreenWidth.toFloat() / 2).toInt()
                             dx = when {
-                                dx - scrollX < 0 -> -scrollX
-                                dx - scrollX > getScrollRangeX() -> getScrollRangeX() - scrollX
+                                dx < 0 -> -scrollX
+                                dx > getScrollRangeX() -> getScrollRangeX() - scrollX
                                 else -> dx - scrollX
                             }
                             mOverScroller.startScroll(
@@ -545,8 +546,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                             val centerTopY = childView.top + childView.measuredHeight.toFloat() / 2
                             var dy = (centerTopY - measuredHeight.toFloat() / 2).toInt()
                             dy = when {
-                                dy - scrollY < 0 -> -scrollY
-                                dy - scrollY > getScrollRangeY() -> getScrollRangeY() - scrollY
+                                dy < 0 -> -scrollY
+                                dy > getScrollRangeY() -> getScrollRangeY() - scrollY
                                 else -> dy - scrollY
                             }
                             mOverScroller.startScroll(

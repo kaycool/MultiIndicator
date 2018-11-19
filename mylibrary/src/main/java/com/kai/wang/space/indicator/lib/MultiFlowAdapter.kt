@@ -11,7 +11,9 @@ interface MultiFlowAdapter {
 
     fun onCreateIndicatorView(parent: ViewGroup): View
 
-    fun onBindView(view: View, position: Int)
+    fun selectView(view: View, position: Int)
+
+    fun unSelectView(view: View, position: Int)
 
     fun getItemCount(): Int = 0
 }
