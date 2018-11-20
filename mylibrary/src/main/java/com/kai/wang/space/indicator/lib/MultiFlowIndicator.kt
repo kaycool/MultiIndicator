@@ -26,7 +26,6 @@ import android.widget.OverScroller
 class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     private lateinit var mViewPager: ViewPager
     private var mSpaceFlowAdapter: MultiFlowAdapter<Any>? = null
-    private val mTitles by lazy { mutableListOf<String>() }
 
     private val mScreenWidth: Int
         get() {
@@ -586,26 +585,15 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
             override fun onPageSelected(p0: Int) {
                 mSpaceFlowAdapter?.apply {
                     if (mPreSelectedTab != p0) {
-                        this.onSelected(this.getView(this@MultiFlowIndicator, p0, this.getItem(p0)), p0)
-                        this.unSelected(
-                            this.getView(
-                                this@MultiFlowIndicator,
-                                mPreSelectedTab,
-                                this.getItem(mPreSelectedTab)
-                            ), mPreSelectedTab
-                        )
+                        this.onSelected(this@MultiFlowIndicator.getChildAt(p0), p0)
+                        this.unSelected(this@MultiFlowIndicator.getChildAt(mPreSelectedTab), mPreSelectedTab)
                     }
                 }
                 mPreSelectedTab = p0
             }
         })
 
-        this.mViewPager.adapter?.apply {
-            for (i in 0 until this.count) {
-                mTitles.add(this.getPageTitle(i).toString())
-            }
-        }
-
+        this.mViewPager.currentItem = 0
     }
 
     fun changedMode(mode: MODE) {
