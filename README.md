@@ -12,11 +12,11 @@
       
 2.  Add the dependency
 
+
     dependencies {
 	        implementation 'com.github.kaycool:MultiIndicator:Tag'
-	  }
-    
-    
+    }
+       
 3. add tag to xml
 
     <com.kai.wang.space.indicator.lib.MultiFlowIndicator
