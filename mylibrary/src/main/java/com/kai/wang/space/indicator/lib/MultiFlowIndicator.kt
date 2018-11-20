@@ -143,10 +143,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        var left = l
-        var top = t
-        var right = 0
-        var bottom = 0
+        var left = 0
+        var top = 0
+        var right = l
+        var bottom = t
+        var lineHeight = 0
         when (mMode) {
             MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
@@ -163,15 +164,22 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
+
+                    left += layoutParams.leftMargin
                     right = left + childView.measuredWidth
                     if (right > measuredWidth) {
-                        left = l
+                        left = l + layoutParams.leftMargin
                         right = left + childView.measuredWidth
-                        top += childView.measuredHeight + layoutParams.bottomMargin
+                        bottom += lineHeight
+                        lineHeight = 0
                     }
-                    bottom = top + childView.measuredHeight
-                    childView.layout(left, top + layoutParams.topMargin, right, bottom)
+                    top = bottom + layoutParams.topMargin
+                    childView.layout(left, top, right, top + childView.measuredHeight)
                     left = right + layoutParams.rightMargin
+                    lineHeight = Math.max(
+                        lineHeight,
+                        childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin
+                    )
                 }
             }
             else -> {
