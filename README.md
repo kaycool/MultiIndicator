@@ -12,18 +12,17 @@
       
 2.  Add the dependency
 
-
-    dependencies {
+    	dependencies {
 	        implementation 'com.github.kaycool:MultiIndicator:Tag'
-    }
+    	}
        
 3. add tag to xml
 
-    <com.kai.wang.space.indicator.lib.MultiFlowIndicator
-            android:id="@+id/spaceFlowIndicator"
-            app:si_max_height="150dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+    	<com.kai.wang.space.indicator.lib.MultiFlowIndicator
+            	android:id="@+id/spaceFlowIndicator"
+            	app:si_max_height="150dp"
+            	android:layout_width="match_parent"
+            	android:layout_height="wrap_content"/>
 
 4. define title list to activity
 
@@ -31,20 +30,20 @@
 
 5. viewpager set adapter
 
-     viewPager.adapter = object : FragmentStatePagerAdapter(supportFragmentManager) {
-            override fun getItem(p0: Int): Fragment {
-                return TestFragment()
-            }
+    	 viewPager.adapter = object : FragmentStatePagerAdapter(supportFragmentManager) {
+           	 override fun getItem(p0: Int): Fragment {
+               	 	return TestFragment()
+            	}
 
-            override fun getCount(): Int {
-                return mTitles.size
-            }
+            	override fun getCount(): Int {
+                	return mTitles.size
+            	}
 
-            override fun getPageTitle(position: Int): CharSequence? {
-                return mTitles[position]
-            }
+            	override fun getPageTitle(position: Int): CharSequence? {
+                	return mTitles[position]
+            	}
 
-        }
+        	}
 
 6. MultiFlowIndicator setAdapter ,object who is implements MultiFlowAdapter<T>
 
@@ -92,5 +91,5 @@
         
 7. setViewPager
 
-     spaceFlowIndicator.setViewPager(viewPager)
+     	spaceFlowIndicator.setViewPager(viewPager)
 
