@@ -1,5 +1,6 @@
 package com.kai.wang.space.indicator.lib
 
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Canvas
@@ -9,6 +10,7 @@ import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaCodec.MetricsConstants.MODE
 import android.os.Build
+import android.support.v4.content.res.TypedArrayUtils.obtainAttributes
 import android.support.v4.view.NestedScrollingChild
 import android.support.v4.view.NestedScrollingChildHelper
 import android.support.v4.view.NestedScrollingParentHelper
@@ -16,10 +18,7 @@ import android.support.v4.view.ViewPager
 import android.support.v4.widget.ViewDragHelper.INVALID_POINTER
 import android.util.AttributeSet
 import android.util.Log
-import android.view.MotionEvent
-import android.view.VelocityTracker
-import android.view.ViewConfiguration
-import android.view.ViewGroup
+import android.view.*
 import android.widget.OverScroller
 
 
@@ -83,6 +82,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     private var mMaximumVelocity: Int = 0
     private var mOverscrollDistance: Int = 0
     private var mOverflingDistance: Int = 0
+    private val mScrollOffset = IntArray(2)
+    private val mScrollConsumed = IntArray(2)
+    private var mNestedYOffset: Int = 0
     private var mLastX = 0f
     private var mLastY = 0f
 
@@ -201,61 +203,18 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         calcIndicatorRect()
-        if (childCount > mCurrentTab) {
-            val drawChildView = getChildAt(mCurrentTab)
-
-            when {
-                mIndicatorEqualsTitle -> {
-
-                    when (mIndicatorStyle) {
-                        STYLE_NORMAL -> {
-                            canvas.drawRect(mIndicatorRect, mPaint)
-                        }
-
-                        STYLE_RECTANGLE -> {
-                            mIndicatorDrawable.setColor(mIndicatorColor)
-                            mIndicatorDrawable.bounds = mIndicatorRect
-                            mIndicatorDrawable.cornerRadius = mIndicatorStyleRadius
-                            mIndicatorDrawable.draw(canvas)
-                        }
-                    }
-                }
-
-                mIndicatorWidth >= drawChildView.measuredWidth -> {
-
-                    when (mIndicatorStyle) {
-                        STYLE_NORMAL -> {
-                            canvas.drawRect(mIndicatorRect, mPaint)
-                        }
-
-                        STYLE_RECTANGLE -> {
-                            mIndicatorDrawable.setColor(mIndicatorColor)
-                            mIndicatorDrawable.bounds = mIndicatorRect
-                            mIndicatorDrawable.cornerRadius = mIndicatorStyleRadius
-                            mIndicatorDrawable.draw(canvas)
-                        }
-                    }
-
-                }
-
-                else -> {
-                    when (mIndicatorStyle) {
-                        STYLE_NORMAL -> {
-                            canvas.drawRect(mIndicatorRect, mPaint)
-                        }
-
-                        STYLE_RECTANGLE -> {
-                            mIndicatorDrawable.setColor(mIndicatorColor)
-                            mIndicatorDrawable.bounds = mIndicatorRect
-                            mIndicatorDrawable.cornerRadius = mIndicatorStyleRadius
-                            mIndicatorDrawable.draw(canvas)
-                        }
-                    }
-                }
+        when (mIndicatorStyle) {
+            STYLE_NORMAL -> {
+                canvas.drawRect(mIndicatorRect, mPaint)
             }
 
+            STYLE_RECTANGLE -> {
+                mIndicatorDrawable.setColor(mIndicatorColor)
+                mIndicatorDrawable.bounds = mIndicatorRect
+                mIndicatorDrawable.cornerRadius = mIndicatorStyleRadius
+                mIndicatorDrawable.draw(canvas)
+            }
         }
-
     }
 
 
@@ -280,7 +239,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                 mLastX = event.x
                 mLastY = event.y
 
+                mNestedYOffset = 0
+                event.offsetLocation(0f, mNestedYOffset.toFloat())
+
                 mActivePointerId = event.getPointerId(0)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    startNestedScroll(View.SCROLL_AXIS_VERTICAL)
+                }
             }
             MotionEvent.ACTION_MOVE -> {
                 val activePointerId = mActivePointerId
@@ -297,55 +262,92 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                 val moveX = event.getX(pointerIndex)
                 val moveY = event.getY(pointerIndex)
 
-                val delX = (mLastX - moveX).toInt()
-                val delY = (mLastY - moveY).toInt()
+                var delX = (mLastX - moveX).toInt()
+                var delY = (mLastY - moveY).toInt()
 
-                when {
-                    Math.abs(delX) > Math.abs(delY)
-                            && (canScrollHorizontally(-1)
-                            || canScrollHorizontally(1)) -> {
-                        val dx = when {
-                            scrollX + delX < 0 -> -scrollX
-                            scrollX + delX > getScrollRangeX() -> getScrollRangeX() - scrollX
-                            else -> delX
+
+                if (dispatchNestedPreScroll(delX, delY, mScrollConsumed, mScrollOffset)) {
+                    delX -= mScrollConsumed[0]
+                    delY -= mScrollConsumed[1]
+                    event.offsetLocation(0f, mScrollOffset[1].toFloat())
+                    mNestedYOffset += mScrollOffset[1]
+                }
+                mLastX = moveX - mScrollOffset[0]
+                mLastY = moveY - mScrollOffset[1]
+
+                val oldY = scrollY
+                if (overScrollBy(
+                        delX,
+                        delY,
+                        scrollX,
+                        scrollY,
+                        getScrollRangeX(),
+                        getScrollRangeY(),
+                        mOverscrollDistance,
+                        mOverscrollDistance,
+                        true
+                    ) && !hasNestedScrollingParent()
+                ) {
+                    // Break our velocity if we hit a scroll barrier.
+                    mVelocityTracker.clear()
+                }
+
+                val scrolledDeltaY = scrollY - oldY
+                val unconsumedY = delY - scrolledDeltaY
+                if (dispatchNestedScroll(0, scrolledDeltaY, 0, unconsumedY, mScrollOffset)) run {
+                    mLastX -= mScrollOffset[0]
+                    mLastY -= mScrollOffset[1]
+                    event.offsetLocation(0f, mScrollOffset[1].toFloat())
+                    mNestedYOffset += mScrollOffset[1]
+                } else {
+
+                    when {
+                        Math.abs(delX) > Math.abs(delY)
+                                && (canScrollHorizontally(-1)
+                                || canScrollHorizontally(1)) -> {
+                            val dx = when {
+                                scrollX + delX < 0 -> -scrollX
+                                scrollX + delX > getScrollRangeX() -> getScrollRangeX() - scrollX
+                                else -> delX
+                            }
+                            mOverScroller.startScroll(
+                                scrollX,
+                                0,
+                                dx,
+                                0
+                            )
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                                postInvalidateOnAnimation()
+                            } else {
+                                postInvalidate()
+                            }
                         }
-                        mOverScroller.startScroll(
-                            scrollX,
-                            0,
-                            dx,
-                            0
-                        )
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                            postInvalidateOnAnimation()
-                        } else {
-                            postInvalidate()
+
+                        Math.abs(delY) > Math.abs(delX)
+                                && (canScrollVertically(-1)
+                                || canScrollVertically(1)) -> {
+
+                            val dy = when {
+                                scrollY + delY < 0 -> -scrollY
+                                scrollY + delY > getScrollRangeY() -> getScrollRangeY() - scrollY
+                                else -> delY
+                            }
+
+                            mOverScroller.startScroll(
+                                0,
+                                scrollY,
+                                0,
+                                dy
+                            )
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                                postInvalidateOnAnimation()
+                            } else {
+                                postInvalidate()
+                            }
                         }
-                    }
-
-                    Math.abs(delY) > Math.abs(delX)
-                            && (canScrollVertically(-1)
-                            || canScrollVertically(1)) -> {
-
-                        val dy = when {
-                            scrollY + delY < 0 -> -scrollY
-                            scrollY + delY > getScrollRangeY() -> getScrollRangeY() - scrollY
-                            else -> delY
+                        else -> {
                         }
-
-                        mOverScroller.startScroll(
-                            0,
-                            scrollY,
-                            0,
-                            dy
-                        )
-
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                            postInvalidateOnAnimation()
-                        } else {
-                            postInvalidate()
-                        }
-                    }
-                    else -> {
                     }
                 }
 
@@ -588,42 +590,39 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
             var bottom = drawChildView.bottom.toFloat()
 
             if (mIndicatorEqualsTitle) {
-                mIndicatorRect.set(
-                    drawChildView.left + drawChildView.paddingLeft
-                    , drawChildView.bottom - mIndicatorHeight.toInt()
-                    , drawChildView.right - drawChildView.paddingRight
-                    , drawChildView.bottom
-                )
+                left = drawChildView.left.toFloat() + drawChildView.paddingLeft
+                right = drawChildView.right.toFloat() - drawChildView.paddingRight
             }
-
 
             if (this.mCurrentTab < childCount - 1) {
                 val nextDrawChildView = getChildAt(this.mCurrentTab + 1)
 
                 val nextTabLeft = nextDrawChildView.left
                 val nextTabRight = nextDrawChildView.right
+                val nextTabTop = nextDrawChildView.top
+                val nextTabBottom = nextDrawChildView.bottom
 
                 left += mCurrentTabOffset * (nextTabLeft - left)
                 right += mCurrentTabOffset * (nextTabRight - right)
 
-                top = nextDrawChildView.top.toFloat()
-                bottom = nextDrawChildView.bottom.toFloat()
+                when (mIndicatorStyle) {
+                    STYLE_NORMAL -> {
+                        top = drawChildView.bottom.toFloat() - mIndicatorHeight
+                        bottom = drawChildView.bottom.toFloat()
+                    }
+
+                    STYLE_RECTANGLE -> {
+                        top += mCurrentTabOffset * (nextTabTop - top)
+                        bottom += mCurrentTabOffset * (nextTabBottom - bottom)
+                    }
+                }
+
             }
 
             mIndicatorRect.left = left.toInt()
             mIndicatorRect.right = right.toInt()
             mIndicatorRect.top = top.toInt()
             mIndicatorRect.bottom = bottom.toInt()
-
-            when (mIndicatorStyle) {
-                STYLE_NORMAL -> {
-
-                }
-
-                STYLE_RECTANGLE -> {
-
-                }
-            }
 
 
 //            val padding = drawChildView.measuredWidth.toFloat() / 2 - mIndicatorWidth / 2

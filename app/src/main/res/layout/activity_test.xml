@@ -9,7 +9,7 @@
             android:id="@+id/spaceFlowIndicator"
             app:multi_max_height="150dp"
             app:multi_indicator_style="rectangle"
-            app:multi_indicator_radius="0dp"
+            app:multi_indicator_radius="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
