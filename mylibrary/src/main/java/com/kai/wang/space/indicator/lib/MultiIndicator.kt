@@ -68,28 +68,28 @@ class MultiIndicator : RecyclerView {
         attrs?.apply {
             val a = context.obtainStyledAttributes(attrs, R.styleable.MultiIndicator)
 
-            mTextSelectedColor = a.getColor(R.styleable.MultiIndicator_si_text_selected_color, Color.RED)
-            mTextUnSelectedColor = a.getColor(R.styleable.MultiIndicator_si_text_unselected_color, Color.BLACK)
+            mTextSelectedColor = a.getColor(R.styleable.MultiIndicator_multi_text_selected_color, Color.RED)
+            mTextUnSelectedColor = a.getColor(R.styleable.MultiIndicator_multi_text_unselected_color, Color.BLACK)
             mTextSelectedSize = a.getDimension(
-                R.styleable.MultiIndicator_si_text_selected_size,
+                R.styleable.MultiIndicator_multi_text_selected_size,
                 resources.getDimension(R.dimen.sp_10)
             )
             mTextUnSelectedSize = a.getDimension(
-                R.styleable.MultiIndicator_si_text_unselected_size,
+                R.styleable.MultiIndicator_multi_text_unselected_size,
                 resources.getDimension(R.dimen.sp_10)
             )
             mIndicatorHeight =
                     a.getDimension(
-                        R.styleable.MultiIndicator_si_indicator_height,
+                        R.styleable.MultiIndicator_multi_indicator_height,
                         resources.getDimension(R.dimen.dimen_3)
                     )
             mIndicatorWidth =
                     a.getDimension(
-                        R.styleable.MultiIndicator_si_indicator_width,
+                        R.styleable.MultiIndicator_multi_indicator_width,
                         resources.getDimension(R.dimen.dimen_8)
                     )
             mIndicatorColor =
-                    a.getColor(R.styleable.MultiIndicator_si_indicator_color, Color.RED)
+                    a.getColor(R.styleable.MultiIndicator_multi_indicator_color, Color.RED)
 
             a.recycle()
         }

@@ -7,7 +7,9 @@
 
     <com.kai.wang.space.indicator.lib.MultiFlowIndicator
             android:id="@+id/spaceFlowIndicator"
-            app:si_max_height="150dp"
+            app:multi_max_height="150dp"
+            app:multi_indicator_style="rectangle"
+            app:multi_indicator_radius="0dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 

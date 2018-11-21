@@ -5,6 +5,9 @@ import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.drawable.GradientDrawable
+import android.media.MediaCodec.MetricsConstants.MODE
 import android.os.Build
 import android.support.v4.view.NestedScrollingChild
 import android.support.v4.view.NestedScrollingChildHelper
@@ -18,6 +21,7 @@ import android.view.VelocityTracker
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.OverScroller
+
 
 /**
  * @author kai.w
@@ -49,12 +53,19 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                 else -> 0
             }
         }
+
+    /** 用于绘制显示器  */
+    private val mIndicatorRect = Rect()
+    private val mIndicatorDrawable = GradientDrawable()
     private var mTextSelectedColor = Color.RED
     private var mTextUnSelectedColor = Color.BLACK
     private var mTextSelectedSize = resources.getDimension(R.dimen.sp_10)
     private var mTextUnSelectedSize = resources.getDimension(R.dimen.sp_10)
     private var mIndicatorHeight = resources.getDimension(R.dimen.dimen_3)
     private var mIndicatorWidth = resources.getDimension(R.dimen.dimen_8)
+    private var mIndicatorEqualsTitle = false
+    private var mIndicatorStyle = STYLE_NORMAL
+    private var mIndicatorStyleRadius = 0f
     private var mMaxHeight = mScreenHeight.toFloat()
     private var mIndicatorColor = Color.RED
     private val mPaint by lazy {
@@ -79,7 +90,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     private var mActivePointerId = INVALID_POINTER
     private val mOverScroller by lazy { OverScroller(context) }
     private lateinit var mVelocityTracker: VelocityTracker
-    private var mMode = MODE.HORIZONL
+    private var mMode = MultiFlowIndicator.MODE.HORIZONL
     private var mPreSelectedTab = 0
     private var mCurrentTab = 0
     private var mCurrentTabOffsetPixel = 0
@@ -107,7 +118,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         var measureWidth = 0
         var measureHeight = 0
         when (mMode) {
-            MODE.HORIZONL -> {
+            MultiFlowIndicator.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     measureChild(childView, widthMeasureSpec, heightMeasureSpec)
@@ -118,7 +129,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                     }
                 }
             }
-            MODE.VERTICAL -> {
+            MultiFlowIndicator.MODE.VERTICAL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     measureChild(childView, widthMeasureSpec, heightMeasureSpec)
@@ -148,7 +159,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         var bottom = t
         var lineHeight = 0
         when (mMode) {
-            MODE.HORIZONL -> {
+            MultiFlowIndicator.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
@@ -159,7 +170,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                     left = right + layoutParams.rightMargin
                 }
             }
-            MODE.VERTICAL -> {
+            MultiFlowIndicator.MODE.VERTICAL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
@@ -187,16 +198,62 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         }
     }
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
+        calcIndicatorRect()
         if (childCount > mCurrentTab) {
             val drawChildView = getChildAt(mCurrentTab)
 
-            canvas?.drawRect(
-                drawChildView.left.toFloat(), drawChildView.bottom.toFloat() - mIndicatorHeight
-                , drawChildView.right.toFloat(), drawChildView.bottom.toFloat(), mPaint
-            )
+            when {
+                mIndicatorEqualsTitle -> {
+
+                    when (mIndicatorStyle) {
+                        STYLE_NORMAL -> {
+                            canvas.drawRect(mIndicatorRect, mPaint)
+                        }
+
+                        STYLE_RECTANGLE -> {
+                            mIndicatorDrawable.setColor(mIndicatorColor)
+                            mIndicatorDrawable.bounds = mIndicatorRect
+                            mIndicatorDrawable.cornerRadius = mIndicatorStyleRadius
+                            mIndicatorDrawable.draw(canvas)
+                        }
+                    }
+                }
+
+                mIndicatorWidth >= drawChildView.measuredWidth -> {
+
+                    when (mIndicatorStyle) {
+                        STYLE_NORMAL -> {
+                            canvas.drawRect(mIndicatorRect, mPaint)
+                        }
+
+                        STYLE_RECTANGLE -> {
+                            mIndicatorDrawable.setColor(mIndicatorColor)
+                            mIndicatorDrawable.bounds = mIndicatorRect
+                            mIndicatorDrawable.cornerRadius = mIndicatorStyleRadius
+                            mIndicatorDrawable.draw(canvas)
+                        }
+                    }
+
+                }
+
+                else -> {
+                    when (mIndicatorStyle) {
+                        STYLE_NORMAL -> {
+                            canvas.drawRect(mIndicatorRect, mPaint)
+                        }
+
+                        STYLE_RECTANGLE -> {
+                            mIndicatorDrawable.setColor(mIndicatorColor)
+                            mIndicatorDrawable.bounds = mIndicatorRect
+                            mIndicatorDrawable.cornerRadius = mIndicatorStyleRadius
+                            mIndicatorDrawable.draw(canvas)
+                        }
+                    }
+                }
+            }
+
         }
 
     }
@@ -431,28 +488,40 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         attrs?.apply {
             val a = context.obtainStyledAttributes(attrs, R.styleable.MultiIndicator)
 
-            mTextSelectedColor = a.getColor(R.styleable.MultiIndicator_si_text_selected_color, Color.RED)
-            mTextUnSelectedColor = a.getColor(R.styleable.MultiIndicator_si_text_unselected_color, Color.BLACK)
+            mTextSelectedColor = a.getColor(R.styleable.MultiIndicator_multi_text_selected_color, Color.RED)
+            mTextUnSelectedColor = a.getColor(R.styleable.MultiIndicator_multi_text_unselected_color, Color.BLACK)
             mTextSelectedSize = a.getDimension(
-                R.styleable.MultiIndicator_si_text_selected_size,
+                R.styleable.MultiIndicator_multi_text_selected_size,
                 resources.getDimension(R.dimen.sp_10)
             )
             mTextUnSelectedSize = a.getDimension(
-                R.styleable.MultiIndicator_si_text_unselected_size,
+                R.styleable.MultiIndicator_multi_text_unselected_size,
                 resources.getDimension(R.dimen.sp_10)
             )
             mIndicatorHeight =
                     a.getDimension(
-                        R.styleable.MultiIndicator_si_indicator_height,
+                        R.styleable.MultiIndicator_multi_indicator_height,
                         resources.getDimension(R.dimen.dimen_3)
                     )
             mIndicatorWidth = a.getDimension(
-                R.styleable.MultiIndicator_si_indicator_width,
+                R.styleable.MultiIndicator_multi_indicator_width,
                 resources.getDimension(R.dimen.dimen_8)
             )
-            mMaxHeight = a.getDimension(R.styleable.MultiIndicator_si_max_height, mScreenHeight.toFloat())
+            mIndicatorEqualsTitle = a.getBoolean(
+                R.styleable.MultiIndicator_multi_indicator_equal_title,
+                false
+            )
+            mIndicatorStyle = a.getInt(
+                R.styleable.MultiIndicator_multi_indicator_style,
+                STYLE_NORMAL
+            )
+            mIndicatorStyleRadius = a.getDimension(
+                R.styleable.MultiIndicator_multi_indicator_radius,
+                0f
+            )
+            mMaxHeight = a.getDimension(R.styleable.MultiIndicator_multi_max_height, mScreenHeight.toFloat())
             mIndicatorColor =
-                    a.getColor(R.styleable.MultiIndicator_si_indicator_color, Color.RED)
+                    a.getColor(R.styleable.MultiIndicator_multi_indicator_color, Color.GRAY)
 
             a.recycle()
         }
@@ -510,6 +579,60 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         }
     }
 
+    private fun calcIndicatorRect() {
+        if (childCount > this.mCurrentTab) {
+            val drawChildView = getChildAt(this.mCurrentTab)
+            var left = drawChildView.left.toFloat()
+            var right = drawChildView.right.toFloat()
+            var top = drawChildView.top.toFloat()
+            var bottom = drawChildView.bottom.toFloat()
+
+            if (mIndicatorEqualsTitle) {
+                mIndicatorRect.set(
+                    drawChildView.left + drawChildView.paddingLeft
+                    , drawChildView.bottom - mIndicatorHeight.toInt()
+                    , drawChildView.right - drawChildView.paddingRight
+                    , drawChildView.bottom
+                )
+            }
+
+
+            if (this.mCurrentTab < childCount - 1) {
+                val nextDrawChildView = getChildAt(this.mCurrentTab + 1)
+
+                val nextTabLeft = nextDrawChildView.left
+                val nextTabRight = nextDrawChildView.right
+
+                left += mCurrentTabOffset * (nextTabLeft - left)
+                right += mCurrentTabOffset * (nextTabRight - right)
+
+                top = nextDrawChildView.top.toFloat()
+                bottom = nextDrawChildView.bottom.toFloat()
+            }
+
+            mIndicatorRect.left = left.toInt()
+            mIndicatorRect.right = right.toInt()
+            mIndicatorRect.top = top.toInt()
+            mIndicatorRect.bottom = bottom.toInt()
+
+            when (mIndicatorStyle) {
+                STYLE_NORMAL -> {
+
+                }
+
+                STYLE_RECTANGLE -> {
+
+                }
+            }
+
+
+//            val padding = drawChildView.measuredWidth.toFloat() / 2 - mIndicatorWidth / 2
+
+
+        }
+
+    }
+
 
     fun setViewPager(viewPager: ViewPager) {
         this.mViewPager = viewPager
@@ -530,7 +653,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                 }
 
                 when (mMode) {
-                    MODE.HORIZONL -> {
+                    MultiFlowIndicator.MODE.HORIZONL -> {
                         if (childCount > scrollChildIndex) {
                             val childView = getChildAt(scrollChildIndex)
                             val centerLeftX = childView.left + childView.measuredWidth.toFloat() / 2
@@ -548,7 +671,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                             )
                         }
                     }
-                    MODE.VERTICAL -> {
+                    MultiFlowIndicator.MODE.VERTICAL -> {
                         if (childCount > scrollChildIndex) {
                             val childView = getChildAt(scrollChildIndex)
                             val centerTopY = childView.top + childView.measuredHeight.toFloat() / 2
@@ -567,7 +690,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                         }
                     }
                     else -> {
-                        changedMode(MODE.HORIZONL)
+                        changedMode(MultiFlowIndicator.MODE.HORIZONL)
                     }
                 }
 
@@ -599,17 +722,17 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     fun changedMode(mode: MODE) {
         mOverScroller.startScroll(scrollX, scrollY, -scrollX, -scrollY)
 //        mMode = mode
-        mMode = if (mMode != MODE.HORIZONL) {
-            MODE.HORIZONL
+        mMode = if (mMode != MultiFlowIndicator.MODE.HORIZONL) {
+            MultiFlowIndicator.MODE.HORIZONL
         } else {
-            MODE.VERTICAL
+            MultiFlowIndicator.MODE.VERTICAL
         }
 
         requestLayout()
 
         post {
             when (mMode) {
-                MODE.HORIZONL -> {
+                MultiFlowIndicator.MODE.HORIZONL -> {
                     if (childCount > mCurrentTab) {
                         val childView = getChildAt(mCurrentTab)
                         val centerLeftX = childView.left + childView.measuredWidth.toFloat() / 2
@@ -632,7 +755,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                         }
                     }
                 }
-                MODE.VERTICAL -> {
+                MultiFlowIndicator.MODE.VERTICAL -> {
                     if (childCount > mCurrentTab) {
                         val childView = getChildAt(mCurrentTab)
                         val centerTopY = childView.top + childView.measuredHeight.toFloat() / 2
@@ -683,5 +806,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
 
     companion object {
         val TAG = "MultiFlowIndicator"
+        private val STYLE_NORMAL = 0
+        private val STYLE_RECTANGLE = 1
     }
 }
