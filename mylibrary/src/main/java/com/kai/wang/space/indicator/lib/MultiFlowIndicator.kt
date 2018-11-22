@@ -777,10 +777,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
 
 //            val padding = drawChildView.measuredWidth.toFloat() / 2 - mIndicatorWidth / 2
-
-
         }
-
     }
 
 

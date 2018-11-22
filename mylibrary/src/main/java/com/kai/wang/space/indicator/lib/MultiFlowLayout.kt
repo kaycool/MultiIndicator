@@ -71,7 +71,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
     private var mActivePointerId = INVALID_POINTER
     private val mOverScroller by lazy { OverScroller(context) }
     private lateinit var mVelocityTracker: VelocityTracker
-    private var mMode = MultiFlowIndicator.MODE.HORIZONL
+    private var mMode = MultiFlowLayout.MODE.HORIZONL
     private var mPreSelectedTab = 0
     private var mCurrentTab = 0
     private var mCurrentTabOffsetPixel = 0
@@ -99,7 +99,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         var measureWidth = 0
         var measureHeight = 0
         when (mMode) {
-            MultiFlowIndicator.MODE.HORIZONL -> {
+            MultiFlowLayout.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     measureChild(childView, widthMeasureSpec, heightMeasureSpec)
@@ -110,7 +110,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                     }
                 }
             }
-            MultiFlowIndicator.MODE.VERTICAL -> {
+            MultiFlowLayout.MODE.VERTICAL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     measureChild(childView, widthMeasureSpec, heightMeasureSpec)
@@ -140,7 +140,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         var bottom = t
         var lineHeight = 0
         when (mMode) {
-            MultiFlowIndicator.MODE.HORIZONL -> {
+            MultiFlowLayout.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
@@ -151,7 +151,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                     left = right + layoutParams.rightMargin
                 }
             }
-            MultiFlowIndicator.MODE.VERTICAL -> {
+            MultiFlowLayout.MODE.VERTICAL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
@@ -582,7 +582,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         attrs?.apply {
             val a = context.obtainStyledAttributes(attrs, R.styleable.MultiFlowLayout)
             mMaxHeight = a.getDimension(R.styleable.MultiFlowLayout_multi_flow_max_height, mScreenHeight.toFloat())
-            mMaxSelectedCount = a.getInt(R.styleable.MultiFlowLayout_multi_max_selected_count, 1)
+            mMaxSelectedCount = a.getInt(R.styleable.MultiFlowLayout_multi_max_selected_count, -1)
             mMaxSelectedTips = a.getString(R.styleable.MultiFlowLayout_multi_max_selected_Tips) ?: ""
             a.recycle()
         }
@@ -642,17 +642,17 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
 
     fun changedMode() {
         mOverScroller.startScroll(scrollX, scrollY, -scrollX, -scrollY)
-        mMode = if (mMode != MultiFlowIndicator.MODE.HORIZONL) {
-            MultiFlowIndicator.MODE.HORIZONL
+        mMode = if (mMode != MultiFlowLayout.MODE.HORIZONL) {
+            MultiFlowLayout.MODE.HORIZONL
         } else {
-            MultiFlowIndicator.MODE.VERTICAL
+            MultiFlowLayout.MODE.VERTICAL
         }
 
         requestLayout()
 
         post {
             when (mMode) {
-                MultiFlowIndicator.MODE.HORIZONL -> {
+                MultiFlowLayout.MODE.HORIZONL -> {
                     if (childCount > mCurrentTab) {
                         val childView = getChildAt(mCurrentTab)
                         val centerLeftX = childView.left + childView.measuredWidth.toFloat() / 2
@@ -675,7 +675,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                         }
                     }
                 }
-                MultiFlowIndicator.MODE.VERTICAL -> {
+                MultiFlowLayout.MODE.VERTICAL -> {
                     if (childCount > mCurrentTab) {
                         val childView = getChildAt(mCurrentTab)
                         val centerTopY = childView.top + childView.measuredHeight.toFloat() / 2
@@ -719,9 +719,10 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                 addView(view)
                 view.setOnClickListener {
                     if (mSelectedView.contains(index)) {
+                        mSelectedView.remove(index)
                         this.unSelected(view, index)
                     } else {
-                        if (mMaxSelectedCount > 0 && mSelectedView.size > mMaxSelectedCount) {
+                        if (mMaxSelectedCount > 0 && mSelectedView.size >= mMaxSelectedCount) {
 //                            Toast.makeText(context, mMaxSelectedTips, Toast.LENGTH_SHORT).show()
                             return@setOnClickListener
                         }
@@ -755,7 +756,5 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
 
     companion object {
         val TAG = "MultiFlowLayout"
-        private val STYLE_NORMAL = 0
-        private val STYLE_RECTANGLE = 1
     }
 }

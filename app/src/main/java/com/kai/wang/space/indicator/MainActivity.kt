@@ -63,7 +63,11 @@ class MainActivity : AppCompatActivity() {
 
         viewPager.adapter = object : FragmentStatePagerAdapter(supportFragmentManager) {
             override fun getItem(p0: Int): Fragment {
-                return IndicatorFragment()
+                return if (p0 == 1) {
+                    FlowFragment()
+                } else {
+                    IndicatorFragment()
+                }
             }
 
             override fun getCount(): Int {
