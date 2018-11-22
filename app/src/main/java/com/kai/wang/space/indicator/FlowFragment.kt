@@ -45,7 +45,8 @@ class FlowFragment : Fragment() {
             "标题二十七22222",
             "标题二十八2222",
             "标题二十九22222",
-            "标题三十2222"
+            "标题三十2222",
+            "标题三十一"
         )
     }
 
@@ -60,12 +61,7 @@ class FlowFragment : Fragment() {
             override fun getView(parent: ViewGroup, position: Int, t: String): View {
                 val textView = TextView(activity!!.applicationContext)
                 textView.text = t
-                textView.setPadding(
-                    resources.getDimensionPixelOffset(R.dimen.dimen_8)
-                    , resources.getDimensionPixelOffset(R.dimen.dimen_5)
-                    , resources.getDimensionPixelOffset(R.dimen.dimen_8)
-                    , resources.getDimensionPixelOffset(R.dimen.dimen_5)
-                )
+                textView.setBackgroundColor(Color.BLUE)
                 return textView
             }
 

@@ -24,6 +24,8 @@
     <declare-styleable name="MultiFlowLayout">
         <attr name="multi_max_selected_count" format="integer"/>
         <attr name="multi_max_selected_Tips" format="string"/>
+        <attr name="multi_flow_padding_horizontal" format="string"/>
+        <attr name="multi_flow_padding_vertical" format="string"/>
         <attr name="multi_flow_max_height" format="dimension"/>
     </declare-styleable>
 

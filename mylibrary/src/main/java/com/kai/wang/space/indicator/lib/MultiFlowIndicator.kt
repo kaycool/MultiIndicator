@@ -152,8 +152,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
             }
         }
         setMeasuredDimension(
-            Math.max(measureWidth, parentWidth)
-            , Math.min(measureHeight, mMaxHeight.toInt())
+            Math.max(measureWidth + paddingLeft + paddingRight, parentWidth)
+            , Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
         )
     }
 
