@@ -1,6 +1,5 @@
 package com.kai.wang.space.indicator.lib
 
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Canvas
@@ -8,9 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
-import android.media.MediaCodec.MetricsConstants.MODE
 import android.os.Build
-import android.support.v4.content.res.TypedArrayUtils.obtainAttributes
 import android.support.v4.view.NestedScrollingChild
 import android.support.v4.view.NestedScrollingChildHelper
 import android.support.v4.view.NestedScrollingParentHelper
@@ -77,6 +74,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     }
     private val mNestedScrollingChildHelper by lazy { NestedScrollingChildHelper(this) }
     private val mNestedScrollingParentHelper by lazy { NestedScrollingParentHelper(this) }
+    private var mIsBeingDragged = false
     private var mTouchSlop: Int = 0
     private var mMinimumVelocity: Int = 0
     private var mMaximumVelocity: Int = 0
@@ -87,6 +85,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     private var mNestedYOffset: Int = 0
     private var mLastX = 0f
     private var mLastY = 0f
+    private var mDeltaX = 0f
+    private var mDeltaY = 0f
 
     //    private var mVerticalScrollFactor: Float = 0.toFloat()
     private var mActivePointerId = INVALID_POINTER
@@ -218,12 +218,61 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
     }
 
 
-    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        dealMultiTouchEvent(ev)
+        when (ev.action) {
+            MotionEvent.ACTION_DOWN -> {
+                if (mIsBeingDragged) {//回调down事件为己用
+                    onTouchEvent(ev)
+                    initOrResetVelocityTracker()
+                    mVelocityTracker.addMovement(ev)
+                }
+            }
+            MotionEvent.ACTION_MOVE -> {
+                // disable move when header not reach top
+                val activePointerId = mActivePointerId
+                if (activePointerId == INVALID_POINTER) {
+                    // If we don't have a valid id, the touch down wasn't on content.
+                    return mIsBeingDragged
+                }
+
+                val pointerIndex = ev.findPointerIndex(activePointerId)
+                if (pointerIndex == -1) {
+                    return mIsBeingDragged
+                }
+                if (Math.abs(mDeltaX) > mTouchSlop || Math.abs(mDeltaY) > mTouchSlop) {
+                    mIsBeingDragged = true
+                    initVelocityTrackerIfNotExists()
+                    mVelocityTracker.addMovement(ev)
+                    mNestedYOffset = 0
+                    val parent = parent
+                    parent?.requestDisallowInterceptTouchEvent(true)
+
+                    ev.action = MotionEvent.ACTION_CANCEL
+                    val obtain = MotionEvent.obtain(ev)
+                    obtain.action = MotionEvent.ACTION_DOWN
+                    dispatchTouchEvent(ev)
+                    return dispatchTouchEvent(obtain)
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                mIsBeingDragged = false
+            }
+
+            else -> {
+            }
+        }
         return super.dispatchTouchEvent(ev)
     }
 
-    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
-        return super.onInterceptTouchEvent(ev)
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        if (scrollY == 0 && !canScrollVertically(1)
+            && scrollX == 0 && !canScrollHorizontally(1)
+        ) {
+            mIsBeingDragged = false
+        }
+        return mIsBeingDragged && isEnabled
     }
 
     override fun performClick(): Boolean {
@@ -232,9 +281,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         initVelocityTrackerIfNotExists()
-        when (event.action) {
-            MotionEvent.ACTION_POINTER_DOWN -> {
-            }
+        mActivePointerId = event.getPointerId(0)
+        when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
                 mLastX = event.x
                 mLastY = event.y
@@ -300,7 +348,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                     event.offsetLocation(0f, mScrollOffset[1].toFloat())
                     mNestedYOffset += mScrollOffset[1]
                 } else {
-
                     when {
                         Math.abs(delX) > Math.abs(delY)
                                 && (canScrollHorizontally(-1)
@@ -354,9 +401,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                 mLastX = moveX
                 mLastY = moveY
             }
-            MotionEvent.ACTION_POINTER_UP -> {
-            }
-            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
+            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
                 Log.d("MultiFlowIndicator", "MotionEvent.ACTION_UP or MotionEvent.ACTION_CANCEL")
                 mLastX = 0f
                 mLastY = 0f
@@ -406,6 +451,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                     }
                 }
                 recycleVelocityTracker()
+                stopNestedScroll()
             }
             else -> {
             }
@@ -413,6 +459,68 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
 
         mVelocityTracker.addMovement(event)
         return true
+    }
+
+
+    //多手势触发
+    private fun dealMultiTouchEvent(event: MotionEvent) {
+        val actionMasked = event.actionMasked
+        val pointerIndex = event.actionIndex
+        if (pointerIndex < 0) {
+            return
+        }
+
+        when (actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                mLastX = event.getX(pointerIndex)
+                mLastY = event.getY(pointerIndex)
+                mDeltaX = 0f
+                mDeltaY = 0f
+                mActivePointerId = event.getPointerId(0)
+            }
+
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                val pointerId = event.getPointerId(pointerIndex)
+                if (pointerId != mActivePointerId) {
+                    mLastX = event.getX(pointerIndex)
+                    mLastY = event.getY(pointerIndex)
+                    mDeltaX = 0f
+                    mDeltaY = 0f
+                    mActivePointerId = event.getPointerId(pointerIndex)
+                }
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                val pointerIndex1 = event.findPointerIndex(mActivePointerId)
+                val moveX = event.getX(pointerIndex1)
+                val moveY = event.getY(pointerIndex1)
+                mDeltaX = moveX - mLastX
+                mDeltaY = moveY - mLastY
+                mLastX = moveX
+                mLastY = moveY
+            }
+
+            MotionEvent.ACTION_POINTER_UP -> {
+                val pointerId = event.getPointerId(pointerIndex)
+                if (mActivePointerId == pointerId) {
+                    val newPointerIndex = if (pointerIndex == 0) {
+                        1
+                    } else {
+                        0
+                    }
+                    mLastX = event.getX(newPointerIndex)
+                    mLastY = event.getY(newPointerIndex)
+                    mActivePointerId = event.getPointerId(newPointerIndex)
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                mActivePointerId = MotionEvent.INVALID_POINTER_ID
+            }
+
+            else -> {
+            }
+        }
     }
 
     override fun computeScroll() {
@@ -483,6 +591,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
 
     override fun generateDefaultLayoutParams(): LayoutParams {
         return MarginLayoutParams(MarginLayoutParams.WRAP_CONTENT, MarginLayoutParams.WRAP_CONTENT)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
     }
 
 
@@ -581,6 +697,17 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         }
     }
 
+    private fun inChild(x: Int, y: Int): Boolean {
+        if (childCount > 0) {
+            val child = getChildAt(0)
+            return !(y < child.top - scrollY
+                    || y >= child.bottom - scrollY
+                    || x < child.left - scrollX
+                    || x >= child.right - scrollX)
+        }
+        return false
+    }
+
     private fun calcIndicatorRect() {
         if (childCount > this.mCurrentTab) {
             val drawChildView = getChildAt(this.mCurrentTab)
@@ -635,86 +762,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
 
     fun setViewPager(viewPager: ViewPager) {
         this.mViewPager = viewPager
-
-        this.mViewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
-
-            override fun onPageScrollStateChanged(p0: Int) {
-
-            }
-
-            override fun onPageScrolled(p0: Int, p1: Float, p2: Int) {
-                Log.d(TAG, "onPageScrolled p0=$p0  p1=$p1  p2=$p2")
-
-                val scrollChildIndex = if (p0 == mCurrentTab && mCurrentTabOffset < p1) {//右翻
-                    p0 + 1
-                } else {
-                    p0
-                }
-
-                when (mMode) {
-                    MultiFlowIndicator.MODE.HORIZONL -> {
-                        if (childCount > scrollChildIndex) {
-                            val childView = getChildAt(scrollChildIndex)
-                            val centerLeftX = childView.left + childView.measuredWidth.toFloat() / 2
-                            var dx = (centerLeftX - mScreenWidth.toFloat() / 2).toInt()
-                            dx = when {
-                                dx < 0 -> -scrollX
-                                dx > getScrollRangeX() -> getScrollRangeX() - scrollX
-                                else -> dx - scrollX
-                            }
-                            mOverScroller.startScroll(
-                                scrollX,
-                                scrollY,
-                                dx,
-                                0
-                            )
-                        }
-                    }
-                    MultiFlowIndicator.MODE.VERTICAL -> {
-                        if (childCount > scrollChildIndex) {
-                            val childView = getChildAt(scrollChildIndex)
-                            val centerTopY = childView.top + childView.measuredHeight.toFloat() / 2
-                            var dy = (centerTopY - measuredHeight.toFloat() / 2).toInt()
-                            dy = when {
-                                dy < 0 -> -scrollY
-                                dy > getScrollRangeY() -> getScrollRangeY() - scrollY
-                                else -> dy - scrollY
-                            }
-                            mOverScroller.startScroll(
-                                scrollX,
-                                scrollY,
-                                0,
-                                dy
-                            )
-                        }
-                    }
-                    else -> {
-                        changedMode(MultiFlowIndicator.MODE.HORIZONL)
-                    }
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    postInvalidateOnAnimation()
-                } else {
-                    postInvalidate()
-                }
-
-                mCurrentTab = p0
-                mCurrentTabOffset = p1
-                mCurrentTabOffsetPixel = p2
-            }
-
-            override fun onPageSelected(p0: Int) {
-                mSpaceFlowAdapter?.apply {
-                    if (mPreSelectedTab != p0) {
-                        this.onSelected(this@MultiFlowIndicator.getChildAt(p0), p0)
-                        this.unSelected(this@MultiFlowIndicator.getChildAt(mPreSelectedTab), mPreSelectedTab)
-                    }
-                }
-                mPreSelectedTab = p0
-            }
-        })
-
+        this.mViewPager.addOnPageChangeListener(onPageChangeListener)
         this.mViewPager.currentItem = 0
     }
 
@@ -791,13 +839,92 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
                 val view = it.getView(this, index, it.getItem(index))
                 view.layoutParams = generateDefaultLayoutParams()
                 addView(view)
-//                view.setOnClickListener {
-//                    mViewPager.currentItem = index
-//                }
+                view.setOnClickListener {
+                    this.mViewPager.setCurrentItem(index, false)
+                }
             }
         }
     }
 
+
+    private val onPageChangeListener = object : ViewPager.OnPageChangeListener {
+
+        override fun onPageScrollStateChanged(p0: Int) {
+
+        }
+
+        override fun onPageScrolled(p0: Int, p1: Float, p2: Int) {
+            Log.d(TAG, "onPageScrolled p0=$p0  p1=$p1  p2=$p2")
+
+            val scrollChildIndex = if (p0 == mCurrentTab && mCurrentTabOffset < p1) {//右翻
+                p0 + 1
+            } else {
+                p0
+            }
+
+            when (mMode) {
+                MultiFlowIndicator.MODE.HORIZONL -> {
+                    if (childCount > scrollChildIndex) {
+                        val childView = getChildAt(scrollChildIndex)
+                        val centerLeftX = childView.left + childView.measuredWidth.toFloat() / 2
+                        var dx = (centerLeftX - mScreenWidth.toFloat() / 2).toInt()
+                        dx = when {
+                            dx < 0 -> -scrollX
+                            dx > getScrollRangeX() -> getScrollRangeX() - scrollX
+                            else -> dx - scrollX
+                        }
+                        mOverScroller.startScroll(
+                            scrollX,
+                            scrollY,
+                            dx,
+                            0
+                        )
+                    }
+                }
+                MultiFlowIndicator.MODE.VERTICAL -> {
+                    if (childCount > scrollChildIndex) {
+                        val childView = getChildAt(scrollChildIndex)
+                        val centerTopY = childView.top + childView.measuredHeight.toFloat() / 2
+                        var dy = (centerTopY - measuredHeight.toFloat() / 2).toInt()
+                        dy = when {
+                            dy < 0 -> -scrollY
+                            dy > getScrollRangeY() -> getScrollRangeY() - scrollY
+                            else -> dy - scrollY
+                        }
+                        mOverScroller.startScroll(
+                            scrollX,
+                            scrollY,
+                            0,
+                            dy
+                        )
+                    }
+                }
+                else -> {
+                    changedMode(MultiFlowIndicator.MODE.HORIZONL)
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                postInvalidateOnAnimation()
+            } else {
+                postInvalidate()
+            }
+
+            mCurrentTab = p0
+            mCurrentTabOffset = p1
+            mCurrentTabOffsetPixel = p2
+        }
+
+        override fun onPageSelected(p0: Int) {
+            mSpaceFlowAdapter?.apply {
+                if (mPreSelectedTab != p0) {
+                    this.onSelected(this@MultiFlowIndicator.getChildAt(p0), p0)
+                    this.unSelected(this@MultiFlowIndicator.getChildAt(mPreSelectedTab), mPreSelectedTab)
+                }
+            }
+            mPreSelectedTab = p0
+        }
+    }
 
     enum class MODE {
         HORIZONL, VERTICAL
