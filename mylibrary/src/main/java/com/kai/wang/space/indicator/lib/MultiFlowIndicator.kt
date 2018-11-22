@@ -23,9 +23,10 @@ import android.widget.OverScroller
  * @author kai.w
  * @des  $des
  */
-class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
+class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListener {
+
     private lateinit var mViewPager: ViewPager
-    private var mSpaceFlowAdapter: MultiFlowAdapter<Any>? = null
+    private var mMultiFlowAdapter: MultiFlowAdapter? = null
 
     private val mScreenWidth: Int
         get() {
@@ -831,9 +832,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         }
     }
 
-    fun setAdapter(spaceFlowAdapter: MultiFlowAdapter<Any>) {
-        this.mSpaceFlowAdapter = spaceFlowAdapter
-        mSpaceFlowAdapter?.let {
+    fun setAdapter(multiFlowAdapter: MultiFlowAdapter) {
+        this.mMultiFlowAdapter = multiFlowAdapter
+        this.mMultiFlowAdapter?.setOnDataChangedListener(this)
+        changeAdapter()
+    }
+
+    private fun changeAdapter() {
+        this.mMultiFlowAdapter?.let {
             removeAllViews()
             for (index in 0 until it.getItemCount()) {
                 val view = it.getView(this, index, it.getItem(index))
@@ -846,6 +852,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         }
     }
 
+    override fun onChanged() {
+        changeAdapter()
+    }
 
     private val onPageChangeListener = object : ViewPager.OnPageChangeListener {
 
@@ -916,7 +925,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild {
         }
 
         override fun onPageSelected(p0: Int) {
-            mSpaceFlowAdapter?.apply {
+            mMultiFlowAdapter?.apply {
                 if (mPreSelectedTab != p0) {
                     this.onSelected(this@MultiFlowIndicator.getChildAt(p0), p0)
                     this.unSelected(this@MultiFlowIndicator.getChildAt(mPreSelectedTab), mPreSelectedTab)

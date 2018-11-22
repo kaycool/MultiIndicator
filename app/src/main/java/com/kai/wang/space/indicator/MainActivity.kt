@@ -1,13 +1,11 @@
 package com.kai.wang.space.indicator
 
-import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentStatePagerAdapter
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
 import com.kai.wang.space.indicator.lib.MultiFlowAdapter
 import com.kai.wang.space.indicator.lib.MultiFlowIndicator
@@ -15,7 +13,7 @@ import kotlinx.android.synthetic.main.activity_test.*
 
 class MainActivity : AppCompatActivity() {
     private val mTitles by lazy {
-        mutableListOf(
+        mutableListOf<String>(
             "标题一",
             "标题二222222222标题二222222222标题二222222222标题二222222222",
             "标题三",
@@ -73,18 +71,15 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun getPageTitle(position: Int): CharSequence? {
-                return mTitles[position]
+                return mTitles[position] as String
             }
 
         }
-        spaceFlowIndicator.setAdapter(object : MultiFlowAdapter<Any> {
-            override fun getItemCount(): Int {
-                return mTitles.size
-            }
+        spaceFlowIndicator.setAdapter(object : MultiFlowAdapter(mTitles) {
 
-            override fun getView(parent: MultiFlowIndicator, position: Int, t: Any): View {
+            override fun getView(parent: MultiFlowIndicator, position: Int, t: String): View {
                 val textView = TextView(applicationContext)
-                textView.text = mTitles[position]
+                textView.text = t
                 textView.setPadding(
                     resources.getDimensionPixelOffset(R.dimen.dimen_8)
                     , resources.getDimensionPixelOffset(R.dimen.dimen_5)
@@ -95,15 +90,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onSelected(view: View, position: Int) {
-//                (view as? TextView)?.post {
-//                    (view as? TextView)?.setTextColor(
-//                        ContextCompat.getColor(
-//                            applicationContext,
-//                            android.R.color.holo_red_light
-//                        )
-//                    )
-//                }
-
                 (view as? TextView)?.setTextColor(
                     ContextCompat.getColor(
                         applicationContext,
@@ -120,10 +106,6 @@ class MainActivity : AppCompatActivity() {
                         android.R.color.black
                     )
                 )
-            }
-
-            override fun getItem(position: Int): Any {
-                return mTitles[position]
             }
 
         })

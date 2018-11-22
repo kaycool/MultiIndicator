@@ -7,16 +7,30 @@ import android.view.View
  * @author kai.w
  * @des  $des
  */
-interface MultiFlowAdapter<T> {
-//    private val mMutiDatas = mutableListOf<T>()
+abstract class MultiFlowAdapter(mutiDatas: MutableList<String>) {
+    private val mMutiDatas = mutiDatas
+    private var mOnDataChangedListener: OnDataChangedListener? = null
 
-    fun getView(parent: MultiFlowIndicator, position: Int, t: T): View
+    fun setOnDataChangedListener(listener: OnDataChangedListener) {
+        mOnDataChangedListener = listener
+    }
 
-    fun onSelected(view: View, position: Int)
+    abstract fun getView(parent: MultiFlowIndicator, position: Int, t: String): View
 
-    fun unSelected(view: View, position: Int)
+    abstract fun onSelected(view: View, position: Int)
 
-    fun getItem(position: Int): T
+    abstract fun unSelected(view: View, position: Int)
 
-    fun getItemCount(): Int
+    fun getItem(position: Int): String = mMutiDatas[position]
+
+    fun getItemCount(): Int = mMutiDatas.size
+
+
+    fun notifyDataChanged() {
+        mOnDataChangedListener?.onChanged()
+    }
+}
+
+interface OnDataChangedListener {
+    fun onChanged()
 }
