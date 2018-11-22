@@ -50,18 +50,6 @@ class MultiIndicator : RecyclerView {
 
     override fun onDraw(c: Canvas?) {
         super.onDraw(c)
-
-        (layoutManager as? LinearLayoutManager?)?.apply {
-            this.findViewByPosition(mCurrentTab)?.apply {
-                c?.drawRect(
-                    this.left.toFloat() + mCurrentTabOffset * this.width,
-                    this.bottom.toFloat() - mIndicatorHeight,
-                    this.right.toFloat() + mCurrentTabOffset * this.width,
-                    this.bottom.toFloat(),
-                    mPaint
-                )
-            }
-        }
     }
 
     fun obtainAttributes(attrs: AttributeSet?) {

@@ -5,10 +5,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+    <!--app:multi_indicator_style="rectangle"-->
     <com.kai.wang.space.indicator.lib.MultiFlowIndicator
             android:id="@+id/spaceFlowIndicator"
             app:multi_max_height="150dp"
-            app:multi_indicator_style="rectangle"
             app:multi_indicator_radius="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
@@ -22,9 +22,11 @@
 
     <Button
             android:id="@+id/btnMode"
+            android:text="切换"
             android:layout_alignParentBottom="true"
             android:layout_centerInParent="true"
-            android:layout_width="80dp"
+            android:layout_width="120dp"
+            android:layout_marginBottom="20dp"
             android:layout_height="40dp"/>
 
 </RelativeLayout>

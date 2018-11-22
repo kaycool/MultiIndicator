@@ -1,6 +1,7 @@
 package com.kai.wang.space.indicator.lib
 
 import android.view.View
+import android.view.ViewGroup
 
 
 /**
@@ -15,7 +16,7 @@ abstract class MultiFlowAdapter(mutiDatas: MutableList<String>) {
         mOnDataChangedListener = listener
     }
 
-    abstract fun getView(parent: MultiFlowIndicator, position: Int, t: String): View
+    abstract fun getView(parent: ViewGroup, position: Int, t: String): View
 
     abstract fun onSelected(view: View, position: Int)
 

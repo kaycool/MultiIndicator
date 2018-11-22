@@ -6,9 +6,9 @@ import android.support.v4.app.FragmentStatePagerAdapter
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import com.kai.wang.space.indicator.lib.MultiFlowAdapter
-import com.kai.wang.space.indicator.lib.MultiFlowIndicator
 import kotlinx.android.synthetic.main.activity_test.*
 
 class MainActivity : AppCompatActivity() {
@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     private val mFragments by lazy {
         mutableListOf(
-            TestFragment()
+            IndicatorFragment()
         )
     }
 
@@ -58,12 +58,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_test)
 
         btnMode.setOnClickListener {
-            spaceFlowIndicator.changedMode(MultiFlowIndicator.MODE.VERTICAL)
+            spaceFlowIndicator.changedMode()
         }
 
         viewPager.adapter = object : FragmentStatePagerAdapter(supportFragmentManager) {
             override fun getItem(p0: Int): Fragment {
-                return TestFragment()
+                return IndicatorFragment()
             }
 
             override fun getCount(): Int {
@@ -71,13 +71,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun getPageTitle(position: Int): CharSequence? {
-                return mTitles[position] as String
+                return mTitles[position]
             }
 
         }
         spaceFlowIndicator.setAdapter(object : MultiFlowAdapter(mTitles) {
 
-            override fun getView(parent: MultiFlowIndicator, position: Int, t: String): View {
+            override fun getView(parent: ViewGroup, position: Int, t: String): View {
                 val textView = TextView(applicationContext)
                 textView.text = t
                 textView.setPadding(

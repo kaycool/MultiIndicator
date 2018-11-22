@@ -10,7 +10,7 @@ import android.view.ViewGroup
  * @author kai.w
  * @des  $des
  */
-class TestFragment : Fragment() {
+class IndicatorFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_test, container, false)
