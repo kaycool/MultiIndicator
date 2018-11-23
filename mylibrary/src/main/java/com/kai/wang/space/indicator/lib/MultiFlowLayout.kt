@@ -128,7 +128,14 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
             MultiFlowLayout.MODE.VERTICAL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
-                    measureChild(childView, widthMeasureSpec, heightMeasureSpec)
+                    measureChild(
+                        childView,
+                        MeasureSpec.makeMeasureSpec(
+                            MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight - mPaddingHorizontal * 2,
+                            MeasureSpec.AT_MOST
+                        ),
+                        heightMeasureSpec
+                    )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
                     val childSpaceWidth =
                         childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
@@ -137,7 +144,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                     measureWidth += childSpaceWidth
                     lineHeight = Math.max(lineHeight, childSpaceHeight)
 
-                    if (measureWidth > parentWidth) {
+                    if (measureWidth + paddingRight + paddingLeft > parentWidth) {
                         measureWidth = childSpaceWidth
                         measureHeight += lineHeight
                         lineHeight = 0
@@ -167,7 +174,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
 
-                    left += layoutParams.leftMargin + paddingLeft + mPaddingHorizontal
+                    left += layoutParams.leftMargin + mPaddingHorizontal
                     top = layoutParams.topMargin + mPaddingVertical + paddingTop
                     right = left + childView.measuredWidth
                     bottom = top + childView.measuredHeight
@@ -181,18 +188,20 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                     val layoutParams = childView.layoutParams as MarginLayoutParams
 
                     left += layoutParams.leftMargin + mPaddingHorizontal
+                    if (i == 0) {
+                        left += paddingLeft
+                    }
                     right = left + childView.measuredWidth
-                    if (right > measuredWidth) {
+                    if (right + paddingRight > measuredWidth) {
                         left = layoutParams.leftMargin + mPaddingHorizontal + paddingLeft
                         right = left + childView.measuredWidth
                         bottom += lineHeight
                         lineHeight = 0
                     }
-                    top = bottom + layoutParams.topMargin + mPaddingVertical
                     if (i == 0) {
-                        left += paddingLeft
-                        top += paddingTop
+                        bottom += paddingTop
                     }
+                    top = bottom + layoutParams.topMargin + mPaddingVertical
 
                     childView.layout(left, top, right, top + childView.measuredHeight)
                     left = right + layoutParams.rightMargin
