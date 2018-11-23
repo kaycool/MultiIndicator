@@ -3,6 +3,7 @@ package com.kai.wang.space.indicator.lib
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Canvas
+import android.nfc.Tag
 import android.os.Build
 import android.os.Parcelable
 import android.support.v4.view.NestedScrollingChild
@@ -131,7 +132,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                     measureChild(
                         childView,
                         MeasureSpec.makeMeasureSpec(
-                            MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight - mPaddingHorizontal * 2,
+                            parentWidth - mPaddingHorizontal * 2,
                             MeasureSpec.AT_MOST
                         ),
                         heightMeasureSpec
@@ -471,6 +472,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         val actionMasked = event.actionMasked
         val pointerIndex = event.actionIndex
         if (pointerIndex < 0) {
+            Log.e(TAG, "Invalid pointerId=$mActivePointerId in onTouchEvent")
             return
         }
 
@@ -496,6 +498,10 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
 
             MotionEvent.ACTION_MOVE -> {
                 val pointerIndex1 = event.findPointerIndex(mActivePointerId)
+                if (pointerIndex1 == -1) {
+                    Log.e(TAG, "Invalid pointerId=$mActivePointerId in onTouchEvent");
+                    return
+                }
                 val moveX = event.getX(pointerIndex1)
                 val moveY = event.getY(pointerIndex1)
                 mDeltaX = moveX - mLastX
