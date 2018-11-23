@@ -102,6 +102,12 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     private var mCurrentTabOffsetPixel = 0
     private var mCurrentTabOffset = 0f
 
+    private var mItemClickCallback: MultiFlowLayout.Companion.ItemClickCallback? = null
+
+    fun setItemClickCallback(itemClickCallback: MultiFlowLayout.Companion.ItemClickCallback) {
+        this.mItemClickCallback = itemClickCallback
+    }
+
     constructor(context: Context?) : this(context, null)
     constructor(context: Context?, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
@@ -874,7 +880,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                 view.layoutParams = generateDefaultLayoutParams()
                 addView(view)
                 view.setOnClickListener {
-                    this.mViewPager.setCurrentItem(index, false)
+                    if (mItemClickCallback?.callback(index) == true) {
+                        this.mViewPager.setCurrentItem(index, false)
+                    }
                 }
             }
         }
@@ -890,8 +898,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                 val view = it.getView(this, positionStart + index)
                 view.layoutParams = generateDefaultLayoutParams()
                 addView(view, positionStart + index)
+            }
+
+            for (index in 0 until it.getItemCount()) {
+                val view = getChildAt(index)
                 view.setOnClickListener {
-                    this.mViewPager.setCurrentItem(index, false)
+                    if (mItemClickCallback?.callback(index) == true) {
+                        this.mViewPager.setCurrentItem(index, false)
+                    }
                 }
             }
         }
@@ -992,5 +1006,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         val TAG = "MultiFlowIndicator"
         private val STYLE_NORMAL = 0
         private val STYLE_RECTANGLE = 1
+
+        interface ItemClickCallback {
+            fun callback(position: Int): Boolean = true
+        }
     }
 }

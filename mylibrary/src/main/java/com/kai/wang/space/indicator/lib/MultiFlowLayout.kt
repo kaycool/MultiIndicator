@@ -80,10 +80,10 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
     private var mCurrentTabOffsetPixel = 0
     private var mCurrentTabOffset = 0f
 
-    private var mSelectCallback: SelectCallback? = null
+    private var mItemClickCallback: ItemClickCallback? = null
 
-    fun setSelectedCallback(selectCallback: SelectCallback) {
-        this.mSelectCallback = selectCallback
+    fun setItemClickCallback(itemClickCallback: ItemClickCallback) {
+        this.mItemClickCallback = itemClickCallback
     }
 
     constructor(context: Context?) : this(context, null)
@@ -778,18 +778,22 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                 }
 
                 view.setOnClickListener {
-                    var hasMaxLimit = false
-                    if (mSelectedView.contains(index)) {
-                        mSelectedView.remove(index)
-                        this.unSelected(view, index)
-                    } else {
-                        hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size <= mMaxSelectedCount
+                    if (mItemClickCallback?.callback(index) == true) {
+                        var hasMaxLimit = false
+                        if (mSelectedView.contains(index)) {
+                            mSelectedView.remove(index)
+                            this.unSelected(view, index)
+                        } else {
+                            hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size >= mMaxSelectedCount
+                            if (!hasMaxLimit) {
+                                mSelectedView.add(index)
+                                this.onSelected(view, index)
+                            }
+                        }
                         if (hasMaxLimit) {
-                            mSelectedView.add(index)
-                            this.onSelected(view, index)
+                            mItemClickCallback?.limitClick()
                         }
                     }
-//                    mSelectCallback?.callback(hasMaxLimit, index)
                 }
             }
         }
@@ -826,18 +830,23 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                 }
 
                 view.setOnClickListener {
-                    var hasMaxLimit = false
-                    if (mSelectedView.contains(index)) {
-                        mSelectedView.remove(index)
-                        this.unSelected(view, index)
-                    } else {
-                        hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size <= mMaxSelectedCount
+                    if (mItemClickCallback?.callback(index) == true) {
+                        var hasMaxLimit = false
+                        if (mSelectedView.contains(index)) {
+                            mSelectedView.remove(index)
+                            this.unSelected(view, index)
+                        } else {
+                            hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size <= mMaxSelectedCount
+                            if (hasMaxLimit) {
+                                mSelectedView.add(index)
+                                this.onSelected(view, index)
+                            }
+                        }
+
                         if (hasMaxLimit) {
-                            mSelectedView.add(index)
-                            this.onSelected(view, index)
+                            mItemClickCallback?.limitClick()
                         }
                     }
-//                    mSelectCallback?.callback(hasMaxLimit, index)
                 }
             }
         }
@@ -859,8 +868,10 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         val TAG = "MultiFlowLayout"
 
 
-        interface SelectCallback {
-            fun callback(hasMaxLimit: Boolean)
+        interface ItemClickCallback {
+            fun callback(position: Int): Boolean = true
+
+            fun limitClick()
         }
     }
 }

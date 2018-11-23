@@ -7,7 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import com.kai.wang.space.indicator.lib.MultiFlowAdapter
+import com.kai.wang.space.indicator.lib.MultiFlowLayout
 import kotlinx.android.synthetic.main.fragment_flow.*
 
 /**
@@ -81,6 +83,23 @@ class FlowFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         flowLayout.setAdapter(mAdapter)
+        flowLayout.setMaxSelectCount(3)
+        flowLayout.setItemClickCallback(object : MultiFlowLayout.Companion.ItemClickCallback {
+
+            override fun callback(position: Int): Boolean {
+                return if (position == flowLayout.childCount - 1) {
+                    Toast.makeText(activity, "自定义点击事件", Toast.LENGTH_SHORT).show()
+                    false
+                } else {
+                    super.callback(position)
+                }
+            }
+
+            override fun limitClick() {
+                Toast.makeText(activity, "hahah", Toast.LENGTH_SHORT).show()
+            }
+
+        })
         btnMode.setOnClickListener {
             flowLayout.changedMode()
         }
