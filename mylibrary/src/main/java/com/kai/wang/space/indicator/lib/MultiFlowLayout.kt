@@ -807,8 +807,48 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         return HashSet(mSelectedView)
     }
 
-    override fun onChanged() {
+    override fun notifyChanged() {
         changeAdapter()
+    }
+
+    override fun insert(positionStart: Int, count: Int) {
+        this.mMultiFlowAdapter?.apply {
+            for (index in 0 until count) {
+                val view = this.getView(this@MultiFlowLayout, positionStart + index)
+                view.layoutParams = generateDefaultLayoutParams()
+                addView(view, positionStart + index)
+            }
+
+            for (index in 0 until this.getItemCount()) {
+                val view = getChildAt(index)
+                if (mSelectedView.contains(index)) {
+                    this.onSelected(view, index)
+                }
+
+                view.setOnClickListener {
+                    var hasMaxLimit = false
+                    if (mSelectedView.contains(index)) {
+                        mSelectedView.remove(index)
+                        this.unSelected(view, index)
+                    } else {
+                        hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size <= mMaxSelectedCount
+                        if (hasMaxLimit) {
+                            mSelectedView.add(index)
+                            this.onSelected(view, index)
+                        }
+                    }
+//                    mSelectCallback?.callback(hasMaxLimit, index)
+                }
+            }
+        }
+    }
+
+    override fun remove(positionStart: Int, count: Int) {
+        this.mMultiFlowAdapter?.apply {
+            for (index in 0 until count) {
+                removeViewAt(positionStart + index)
+            }
+        }
     }
 
     enum class MODE {

@@ -27,10 +27,32 @@ abstract class MultiFlowAdapter<out T>(mutiDatas: MutableList<out T>) {
     fun getItemCount(): Int = mMutiDatas.size
 
     fun notifyDataChanged() {
-        mOnDataChangedListener?.onChanged()
+        mOnDataChangedListener?.notifyChanged()
     }
+
+    fun notifyItemInsert(position: Int){
+        mOnDataChangedListener?.insert(position,1)
+    }
+
+    fun notifyItemInsert(positionStart: Int,count:Int) {
+        mOnDataChangedListener?.insert(positionStart,count)
+    }
+
+    fun notifyItemRemoved(position: Int) {
+        mOnDataChangedListener?.remove(position,1)
+    }
+
+    fun notifyItemRemoved(positionStart: Int,count:Int) {
+        mOnDataChangedListener?.remove(positionStart,count)
+    }
+
 }
 
 interface OnDataChangedListener {
-    fun onChanged()
+
+    fun notifyChanged()
+
+    fun insert(positionStart: Int,count:Int)
+
+    fun remove(positionStart: Int,count:Int)
 }

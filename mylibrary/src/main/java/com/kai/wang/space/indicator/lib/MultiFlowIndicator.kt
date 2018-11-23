@@ -19,6 +19,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.*
 import android.widget.OverScroller
+import java.lang.IllegalArgumentException
 
 
 /**
@@ -785,6 +786,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         this.mViewPager = viewPager
         this.mViewPager.addOnPageChangeListener(onPageChangeListener)
         this.mViewPager.currentItem = 0
+
+        when {
+            this.mViewPager.adapter == null -> throw IllegalArgumentException("MultiFlowIndicator must be set ViewPager adapter first")
+            this.mMultiFlowAdapter == null -> throw IllegalArgumentException("MultiFlowIndicator must be set MultiFlowAdapter first")
+            this.mViewPager.adapter?.count ?: 0 > this.mMultiFlowAdapter?.getItemCount() ?: 0 -> throw IllegalArgumentException(
+                "MultiFlowIndicator title length must be > viewpager page length"
+            )
+        }
     }
 
     fun changedMode() {
@@ -871,8 +880,29 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         }
     }
 
-    override fun onChanged() {
+    override fun notifyChanged() {
         changeAdapter()
+    }
+
+    override fun insert(positionStart: Int, count: Int) {
+        this.mMultiFlowAdapter?.let {
+            for (index in 0 until count) {
+                val view = it.getView(this, positionStart + index)
+                view.layoutParams = generateDefaultLayoutParams()
+                addView(view, positionStart + index)
+                view.setOnClickListener {
+                    this.mViewPager.setCurrentItem(index, false)
+                }
+            }
+        }
+    }
+
+    override fun remove(positionStart: Int, count: Int) {
+        this.mMultiFlowAdapter?.let {
+            for (index in 0 until count) {
+                removeViewAt(positionStart + index)
+            }
+        }
     }
 
     private val onPageChangeListener = object : ViewPager.OnPageChangeListener {
