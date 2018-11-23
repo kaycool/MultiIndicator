@@ -8,7 +8,7 @@ import android.view.ViewGroup
  * @author kai.w
  * @des  $des
  */
-abstract class MultiFlowAdapter(mutiDatas: MutableList<String>) {
+abstract class MultiFlowAdapter<out T>(mutiDatas: MutableList<out T>) {
     private val mMutiDatas = mutiDatas
     private var mOnDataChangedListener: OnDataChangedListener? = null
 
@@ -16,16 +16,15 @@ abstract class MultiFlowAdapter(mutiDatas: MutableList<String>) {
         mOnDataChangedListener = listener
     }
 
-    abstract fun getView(parent: ViewGroup, position: Int, t: String): View
+    abstract fun getView(parent: ViewGroup, position: Int): View
 
     abstract fun onSelected(view: View, position: Int)
 
     abstract fun unSelected(view: View, position: Int)
 
-    fun getItem(position: Int): String = mMutiDatas[position]
+    fun getItem(position: Int): T = mMutiDatas[position]
 
     fun getItemCount(): Int = mMutiDatas.size
-
 
     fun notifyDataChanged() {
         mOnDataChangedListener?.onChanged()

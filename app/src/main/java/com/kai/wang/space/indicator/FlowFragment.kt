@@ -58,10 +58,10 @@ class FlowFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        flowLayout.setAdapter(object : MultiFlowAdapter(mFlows) {
-            override fun getView(parent: ViewGroup, position: Int, t: String): View {
+        flowLayout.setAdapter(object : MultiFlowAdapter<String>(mFlows) {
+            override fun getView(parent: ViewGroup, position: Int): View {
                 val textView = TextView(activity!!.applicationContext)
-                textView.text = t
+                textView.text = getItem(position)
                 textView.setBackgroundColor(Color.BLUE)
                 return textView
             }

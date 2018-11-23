@@ -28,7 +28,7 @@ import android.widget.OverScroller
 class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListener {
 
     private lateinit var mViewPager: ViewPager
-    private var mMultiFlowAdapter: MultiFlowAdapter? = null
+    private var mMultiFlowAdapter: MultiFlowAdapter<Any>? = null
 
     private val mScreenWidth: Int
         get() {
@@ -851,7 +851,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         }
     }
 
-    fun setAdapter(multiFlowAdapter: MultiFlowAdapter) {
+    fun setAdapter(multiFlowAdapter: MultiFlowAdapter<Any>) {
         this.mMultiFlowAdapter = multiFlowAdapter
         this.mMultiFlowAdapter?.setOnDataChangedListener(this)
         changeAdapter()
@@ -861,7 +861,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         this.mMultiFlowAdapter?.let {
             removeAllViews()
             for (index in 0 until it.getItemCount()) {
-                val view = it.getView(this, index, it.getItem(index))
+                val view = it.getView(this, index)
                 view.layoutParams = generateDefaultLayoutParams()
                 addView(view)
                 view.setOnClickListener {

@@ -21,7 +21,7 @@ import android.widget.OverScroller
  * @des  $des
  */
 class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
-    private var mMultiFlowAdapter: MultiFlowAdapter? = null
+    private var mMultiFlowAdapter: MultiFlowAdapter<Any>? = null
     private val mSelectedView = HashSet<Int>()
 
     private val mScreenWidth: Int
@@ -759,7 +759,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         }
     }
 
-    fun setAdapter(multiFlowAdapter: MultiFlowAdapter) {
+    fun setAdapter(multiFlowAdapter: MultiFlowAdapter<Any>) {
         this.mMultiFlowAdapter = multiFlowAdapter
         this.mMultiFlowAdapter?.setOnDataChangedListener(this)
         changeAdapter()
@@ -769,7 +769,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         this.mMultiFlowAdapter?.apply {
             removeAllViews()
             for (index in 0 until this.getItemCount()) {
-                val view = this.getView(this@MultiFlowLayout, index, this.getItem(index))
+                val view = this.getView(this@MultiFlowLayout, index)
                 view.layoutParams = generateDefaultLayoutParams()
                 addView(view)
 

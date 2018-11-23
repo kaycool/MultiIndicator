@@ -79,11 +79,11 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
-        spaceFlowIndicator.setAdapter(object : MultiFlowAdapter(mTitles) {
+        spaceFlowIndicator.setAdapter(object : MultiFlowAdapter<String>(mTitles) {
 
-            override fun getView(parent: ViewGroup, position: Int, t: String): View {
+            override fun getView(parent: ViewGroup, position: Int): View {
                 val textView = TextView(applicationContext)
-                textView.text = t
+                textView.text = getItem(position)
                 textView.setPadding(
                     resources.getDimensionPixelOffset(R.dimen.dimen_8)
                     , resources.getDimensionPixelOffset(R.dimen.dimen_5)
