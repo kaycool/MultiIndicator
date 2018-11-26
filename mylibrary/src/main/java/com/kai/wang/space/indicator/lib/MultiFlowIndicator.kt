@@ -102,9 +102,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     private var mCurrentTabOffsetPixel = 0
     private var mCurrentTabOffset = 0f
 
-    private var mItemClickCallback: MultiFlowLayout.Companion.ItemClickCallback? = null
+    private var mItemClickCallback: ItemClickCallback? = null
 
-    fun setItemClickCallback(itemClickCallback: MultiFlowLayout.Companion.ItemClickCallback) {
+    fun setItemClickCallback(itemClickCallback: ItemClickCallback) {
         this.mItemClickCallback = itemClickCallback
     }
 
@@ -167,15 +167,19 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         var left = 0
         var top = 0
-        var right = l
-        var bottom = t
+        var right = 0
+        var bottom = 0
         var lineHeight = 0
         when (mMode) {
             MultiFlowIndicator.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
-                    top = layoutParams.topMargin
+                    left += layoutParams.leftMargin
+                    if (i == 0) {
+                        left += paddingLeft
+                    }
+                    top = layoutParams.topMargin + paddingTop
                     right = left + childView.measuredWidth
                     bottom = top + childView.measuredHeight
                     childView.layout(left, top, right, bottom)
@@ -802,6 +806,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         }
     }
 
+
     fun changedMode() {
         mOverScroller.startScroll(scrollX, scrollY, -scrollX, -scrollY)
         mMode = if (mMode != MultiFlowIndicator.MODE.HORIZONL) {
@@ -871,6 +876,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         this.mMultiFlowAdapter?.setOnDataChangedListener(this)
         changeAdapter()
     }
+
+    fun getAdapter() = this.mMultiFlowAdapter
 
     private fun changeAdapter() {
         this.mMultiFlowAdapter?.let {
