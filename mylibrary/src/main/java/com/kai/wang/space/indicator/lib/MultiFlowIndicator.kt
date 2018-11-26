@@ -192,14 +192,21 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     val layoutParams = childView.layoutParams as MarginLayoutParams
 
                     left += layoutParams.leftMargin
+                    if (i == 0) {
+                        left += paddingLeft
+                    }
                     right = left + childView.measuredWidth
-                    if (right > measuredWidth) {
-                        left = l + layoutParams.leftMargin
+                    if (right + paddingRight > measuredWidth) {
+                        left = layoutParams.leftMargin + paddingLeft
                         right = left + childView.measuredWidth
                         bottom += lineHeight
                         lineHeight = 0
                     }
+                    if (i == 0) {
+                        bottom += paddingTop
+                    }
                     top = bottom + layoutParams.topMargin
+
                     childView.layout(left, top, right, top + childView.measuredHeight)
                     left = right + layoutParams.rightMargin
                     lineHeight = Math.max(
