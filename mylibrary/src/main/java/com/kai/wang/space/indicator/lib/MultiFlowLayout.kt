@@ -82,10 +82,17 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
     private var mCurrentTabOffset = 0f
 
     private var mItemClickCallback: ItemClickCallback? = null
+    private var mOnLayoutChanged: MultiFlowIndicator.Companion.OnLayoutChanged? = null
 
     fun setItemClickCallback(itemClickCallback: ItemClickCallback) {
         this.mItemClickCallback = itemClickCallback
     }
+
+    fun setOnLayoutChanged(onLayoutChanged: MultiFlowIndicator.Companion.OnLayoutChanged) {
+        this.mOnLayoutChanged = onLayoutChanged
+    }
+
+    fun getMode() = mMode.name
 
     constructor(context: Context?) : this(context, null)
     constructor(context: Context?, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -158,6 +165,9 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                     lineHeight = Math.max(lineHeight, childSpaceHeight)
 
                     if (i == childCount - 1) {
+                        if (lines < mMaxLines) {
+                            mLinesMaxHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
+                        }
                         measureHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
                     }
                 }
@@ -712,7 +722,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         } else {
             MultiFlowLayout.MODE.VERTICAL
         }
-
+        this.mOnLayoutChanged?.changed(mMode.name)
         requestLayout()
 
         post {

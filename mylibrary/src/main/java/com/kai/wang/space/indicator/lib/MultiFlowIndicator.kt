@@ -107,10 +107,17 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     private var mCurrentTabOffset = 0f
 
     private var mItemClickCallback: ItemClickCallback? = null
+    private var mOnLayoutChanged: OnLayoutChanged? = null
 
     fun setItemClickCallback(itemClickCallback: ItemClickCallback) {
         this.mItemClickCallback = itemClickCallback
     }
+
+    fun setOnLayoutChanged(onLayoutChanged: OnLayoutChanged) {
+        this.mOnLayoutChanged = onLayoutChanged
+    }
+
+    fun getMode() = mMode.name
 
     constructor(context: Context?) : this(context, null)
     constructor(context: Context?, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -183,6 +190,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     lineHeight = Math.max(lineHeight, childSpaceHeight)
 
                     if (i == childCount - 1) {
+                        if (lines < mMaxLines) {
+                            mLinesMaxHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
+                        }
                         measureHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
                     }
                 }
@@ -194,7 +204,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         setMeasuredDimension(
             Math.max(parentWidth, measureWidth + paddingLeft + paddingRight), when {
                 mMaxHeight > 0 -> Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
-                mLinesMaxHeight > 0 -> mLinesMaxHeight + paddingTop + paddingBottom
+                mLinesMaxHeight > 0 -> mLinesMaxHeight + paddingTop + paddingBottom + mPaddingVertical
                 else -> measureHeight + paddingTop + paddingBottom
             }
         )
@@ -849,7 +859,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     fun setViewPager(viewPager: ViewPager) {
         this.mViewPager = viewPager
         this.mViewPager.addOnPageChangeListener(onPageChangeListener)
-        this.mViewPager.currentItem = 0
+        if (this.mViewPager.currentItem < 0) {
+            this.mViewPager.currentItem = 0
+        }
 
         when {
             this.mViewPager.adapter == null -> throw IllegalArgumentException("MultiFlowIndicator must be set ViewPager adapter first")
@@ -869,6 +881,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
             MultiFlowIndicator.MODE.VERTICAL
         }
 
+        this.mOnLayoutChanged?.changed(mMode.name)
         requestLayout()
 
         post {
@@ -1079,6 +1092,10 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
         interface ItemClickCallback {
             fun callback(position: Int): Boolean = true
+        }
+
+        interface OnLayoutChanged {
+            fun changed(mode: String)
         }
     }
 }
