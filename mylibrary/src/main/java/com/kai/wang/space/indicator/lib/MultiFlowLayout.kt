@@ -107,6 +107,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
 //        mVerticalScrollFactor = configuration.scaledVerticalScrollFactor
 
         obtainAttributes(attrs)
+        this.mOnLayoutChanged?.changed(mMode.name)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

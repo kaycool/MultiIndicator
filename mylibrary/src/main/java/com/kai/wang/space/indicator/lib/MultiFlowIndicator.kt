@@ -19,8 +19,6 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.*
 import android.widget.OverScroller
-import java.lang.IllegalArgumentException
-import android.nfc.tech.MifareClassic.KEY_DEFAULT
 
 
 /**
@@ -132,6 +130,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 //        mVerticalScrollFactor = configuration.scaledVerticalScrollFactor
 
         obtainAttributes(attrs)
+        this.mOnLayoutChanged?.changed(mMode.name)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
