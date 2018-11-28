@@ -2,13 +2,14 @@ package com.kai.wang.space.indicator.lib
 
 import android.view.View
 import android.view.ViewGroup
+import java.io.Serializable
 
 
 /**
  * @author kai.w
  * @des  $des
  */
-abstract class MultiFlowAdapter<out T>(val mutiDatas: MutableList<out T>) {
+abstract class MultiFlowAdapter<out T>(val mutiDatas: MutableList<out T>) : Serializable {
     private val mMutiDatas = mutiDatas
     private var mOnDataChangedListener: OnDataChangedListener? = null
 
@@ -30,20 +31,20 @@ abstract class MultiFlowAdapter<out T>(val mutiDatas: MutableList<out T>) {
         mOnDataChangedListener?.notifyChanged()
     }
 
-    fun notifyItemInsert(position: Int){
-        mOnDataChangedListener?.insert(position,1)
+    fun notifyItemInsert(position: Int) {
+        mOnDataChangedListener?.insert(position, 1)
     }
 
-    fun notifyItemInsert(positionStart: Int,count:Int) {
-        mOnDataChangedListener?.insert(positionStart,count)
+    fun notifyItemInsert(positionStart: Int, count: Int) {
+        mOnDataChangedListener?.insert(positionStart, count)
     }
 
     fun notifyItemRemoved(position: Int) {
-        mOnDataChangedListener?.remove(position,1)
+        mOnDataChangedListener?.remove(position, 1)
     }
 
-    fun notifyItemRemoved(positionStart: Int,count:Int) {
-        mOnDataChangedListener?.remove(positionStart,count)
+    fun notifyItemRemoved(positionStart: Int, count: Int) {
+        mOnDataChangedListener?.remove(positionStart, count)
     }
 
 }
@@ -52,7 +53,7 @@ interface OnDataChangedListener {
 
     fun notifyChanged()
 
-    fun insert(positionStart: Int,count:Int)
+    fun insert(positionStart: Int, count: Int)
 
-    fun remove(positionStart: Int,count:Int)
+    fun remove(positionStart: Int, count: Int)
 }

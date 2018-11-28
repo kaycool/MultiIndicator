@@ -20,6 +20,7 @@ import android.util.Log
 import android.view.*
 import android.widget.OverScroller
 import java.lang.IllegalArgumentException
+import android.nfc.tech.MifareClassic.KEY_DEFAULT
 
 
 /**
@@ -68,7 +69,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     private var mIndicatorEqualsTitle = false
     private var mIndicatorStyle = STYLE_NORMAL
     private var mIndicatorStyleRadius = 0f
-    private var mMaxHeight = mScreenHeight.toFloat()
+    private var mMaxHeight = -1f
     private var mMaxLines = -1
     private var mIndicatorColor = Color.RED
     private val mPaint by lazy {
@@ -134,6 +135,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         var measureHeight = 0
         var lineHeight = 0
         var lines = 0
+        var mLinesMaxHeight = 0
         when (mMode) {
             MultiFlowLayout.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
@@ -169,19 +171,16 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     val childSpaceHeight =
                         childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin + mPaddingVertical
                     measureWidth += childSpaceWidth
-                    lineHeight = Math.max(lineHeight, childSpaceHeight)
-
                     if (measureWidth + paddingRight + paddingLeft > parentWidth) {
-                        if (mMaxLines in 1..lines) {
-                            measureHeight += mPaddingVertical
-                            break
-                        }
                         measureWidth = childSpaceWidth
-                        measureHeight += lineHeight
+                        measureHeight += lineHeight + childSpaceHeight
+                        if (lines < mMaxLines) {
+                            mLinesMaxHeight += lineHeight
+                        }
                         lineHeight = 0
                         lines++
                     }
-
+                    lineHeight = Math.max(lineHeight, childSpaceHeight)
 
                     if (i == childCount - 1) {
                         measureHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
@@ -192,11 +191,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
             }
         }
 
-        setMeasuredDimension(measureWidth + paddingLeft + paddingRight, if (mMaxHeight > 0) {
-            Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
-        } else {
-            measureHeight
-        })
+        setMeasuredDimension(
+            Math.max(parentWidth, measureWidth + paddingLeft + paddingRight), when {
+                mMaxHeight > 0 -> Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
+                mLinesMaxHeight > 0 -> mLinesMaxHeight + paddingTop + paddingBottom
+                else -> measureHeight + paddingTop + paddingBottom
+            }
+        )
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -658,13 +659,23 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     }
 
     override fun onSaveInstanceState(): Parcelable? {
-        //todo save Bundle
-        return super.onSaveInstanceState()
+        val bundle = Bundle()
+        bundle.putParcelable(KEY_DEFAULT, super.onSaveInstanceState())
+        bundle.putString(KEY_MODE, mMode.name)
+        return bundle
     }
 
     override fun onRestoreInstanceState(state: Parcelable?) {
-        //todo Restore Bundle
-        super.onRestoreInstanceState(state)
+        if (state is Bundle) {
+            mMode = when (state.getString(KEY_MODE)) {
+                MODE.HORIZONL.name -> MODE.VERTICAL
+                else -> MODE.HORIZONL
+            }
+            changedMode()
+            super.onRestoreInstanceState(state.getParcelable(KEY_DEFAULT))
+        } else {
+            super.onRestoreInstanceState(state)
+        }
     }
 
 
@@ -703,7 +714,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                 R.styleable.MultiIndicator_multi_indicator_radius,
                 0f
             )
-            mMaxHeight = a.getDimension(R.styleable.MultiIndicator_multi_max_height, mScreenHeight.toFloat())
+            mMaxHeight = a.getDimension(R.styleable.MultiIndicator_multi_max_height, -1f)
             mMaxLines = a.getInt(R.styleable.MultiIndicator_multi_max_lines, -1)
             mIndicatorColor =
                     a.getColor(R.styleable.MultiIndicator_multi_indicator_color, Color.GRAY)
@@ -920,6 +931,12 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         changeAdapter()
     }
 
+    fun setPage(position: Int) {
+        if (this.mViewPager.adapter?.count ?: return > position) {
+            this.mViewPager.currentItem = position
+        }
+    }
+
     fun getAdapter() = this.mMultiFlowAdapter
 
     private fun changeAdapter() {
@@ -1056,6 +1073,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         val TAG = "MultiFlowIndicator"
         private val STYLE_NORMAL = 0
         private val STYLE_RECTANGLE = 1
+        private val KEY_DEFAULT = "key_default"
+        private val KEY_MODE = "key_mode"
+        private val KEY_ADAPTER = "key_adapter"
 
         interface ItemClickCallback {
             fun callback(position: Int): Boolean = true
