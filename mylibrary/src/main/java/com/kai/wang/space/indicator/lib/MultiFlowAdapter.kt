@@ -8,7 +8,7 @@ import android.view.ViewGroup
  * @author kai.w
  * @des  $des
  */
-abstract class MultiFlowAdapter<out T>(mutiDatas: MutableList<out T>) {
+abstract class MultiFlowAdapter<out T>(val mutiDatas: MutableList<out T>) {
     private val mMutiDatas = mutiDatas
     private var mOnDataChangedListener: OnDataChangedListener? = null
 

@@ -115,5 +115,7 @@ class FlowFragment : Fragment() {
             mFlows.removeAt(3)
             mAdapter.notifyItemRemoved(1, 3)
         }
+
+        mAdapter.mutiDatas
     }
 }

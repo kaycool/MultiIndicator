@@ -55,6 +55,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         }
 
     /** 用于绘制显示器  */
+    private var mPaddingHorizontal = 0
+    private var mPaddingVertical = 0
     private val mIndicatorRect = Rect()
     private val mIndicatorDrawable = GradientDrawable()
     private var mTextSelectedColor = Color.RED
@@ -67,6 +69,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     private var mIndicatorStyle = STYLE_NORMAL
     private var mIndicatorStyleRadius = 0f
     private var mMaxHeight = mScreenHeight.toFloat()
+    private var mMaxLines = -1
     private var mIndicatorColor = Color.RED
     private val mPaint by lazy {
         Paint().apply {
@@ -129,39 +132,71 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
         var measureWidth = 0
         var measureHeight = 0
+        var lineHeight = 0
+        var lines = 0
         when (mMode) {
-            MultiFlowIndicator.MODE.HORIZONL -> {
+            MultiFlowLayout.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     measureChild(childView, widthMeasureSpec, heightMeasureSpec)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
-                    measureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin
+                    measureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
                     if (measureHeight < childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin) {
-                        measureHeight = childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin
-                    }
-                }
-            }
-            MultiFlowIndicator.MODE.VERTICAL -> {
-                for (i in 0 until childCount) {
-                    val childView = getChildAt(i)
-                    measureChild(childView, widthMeasureSpec, heightMeasureSpec)
-                    val layoutParams = childView.layoutParams as MarginLayoutParams
-                    measureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin
-                    if (measureHeight < childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin) {
-                        measureHeight = childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin
-                    }
-                    if (measureWidth > parentWidth) {
-                        measureWidth = childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin
-                        measureHeight += childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin
+                        measureHeight = childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin +
+                                mPaddingVertical
                     }
 
+                    if (i == childCount - 1) {
+                        measureWidth += mPaddingHorizontal
+                        measureHeight += mPaddingVertical
+                    }
                 }
             }
+            MultiFlowLayout.MODE.VERTICAL -> {
+                for (i in 0 until childCount) {
+                    val childView = getChildAt(i)
+                    measureChild(
+                        childView,
+                        MeasureSpec.makeMeasureSpec(
+                            parentWidth - mPaddingHorizontal * 2,
+                            MeasureSpec.AT_MOST
+                        ),
+                        heightMeasureSpec
+                    )
+                    val layoutParams = childView.layoutParams as MarginLayoutParams
+                    val childSpaceWidth =
+                        childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
+                    val childSpaceHeight =
+                        childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin + mPaddingVertical
+                    measureWidth += childSpaceWidth
+                    lineHeight = Math.max(lineHeight, childSpaceHeight)
+
+                    if (measureWidth + paddingRight + paddingLeft > parentWidth) {
+                        if (mMaxLines in 1..lines) {
+                            measureHeight += mPaddingVertical
+                            break
+                        }
+                        measureWidth = childSpaceWidth
+                        measureHeight += lineHeight
+                        lineHeight = 0
+                        lines++
+                    }
+
+
+                    if (i == childCount - 1) {
+                        measureHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
+                    }
+                }
+            }
+            else -> {
+            }
         }
-        setMeasuredDimension(
-            Math.max(measureWidth + paddingLeft + paddingRight, parentWidth)
-            , Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
-        )
+
+        setMeasuredDimension(measureWidth + paddingLeft + paddingRight, if (mMaxHeight > 0) {
+            Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
+        } else {
+            measureHeight
+        })
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -669,6 +704,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                 0f
             )
             mMaxHeight = a.getDimension(R.styleable.MultiIndicator_multi_max_height, mScreenHeight.toFloat())
+            mMaxLines = a.getInt(R.styleable.MultiIndicator_multi_max_lines, -1)
             mIndicatorColor =
                     a.getColor(R.styleable.MultiIndicator_multi_indicator_color, Color.GRAY)
 

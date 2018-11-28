@@ -51,6 +51,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
     private var mPaddingHorizontal = 0
     private var mPaddingVertical = 0
     private var mMaxHeight = mScreenHeight.toFloat()
+    private var mMaxLines = -1
     private var mMaxSelectedCount = -1
     private var mMaxSelectedTips = ""
 
@@ -108,6 +109,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         var measureWidth = 0
         var measureHeight = 0
         var lineHeight = 0
+        var lines = 0
         when (mMode) {
             MultiFlowLayout.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
@@ -146,10 +148,16 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                     lineHeight = Math.max(lineHeight, childSpaceHeight)
 
                     if (measureWidth + paddingRight + paddingLeft > parentWidth) {
+                        if (mMaxLines in 1..lines) {
+                            measureHeight += mPaddingVertical
+                            break
+                        }
                         measureWidth = childSpaceWidth
                         measureHeight += lineHeight
                         lineHeight = 0
+                        lines++
                     }
+
 
                     if (i == childCount - 1) {
                         measureHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
@@ -158,8 +166,11 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
             }
         }
         setMeasuredDimension(
-            Math.max(measureWidth + paddingLeft + paddingRight, parentWidth)
-            , Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
+            measureWidth + paddingLeft + paddingRight, if (mMaxHeight > 0) {
+                Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
+            } else {
+                measureHeight
+            }
         )
     }
 
@@ -637,6 +648,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                 context.resources.getDimensionPixelOffset(R.dimen.dimen_5)
             )
             mMaxHeight = a.getDimension(R.styleable.MultiFlowLayout_multi_flow_max_height, mScreenHeight.toFloat())
+            mMaxLines = a.getInt(R.styleable.MultiFlowLayout_multi_flow_max_lines, -1)
             mMaxSelectedCount = a.getInt(R.styleable.MultiFlowLayout_multi_max_selected_count, -1)
             mMaxSelectedTips = a.getString(R.styleable.MultiFlowLayout_multi_max_selected_Tips) ?: ""
             a.recycle()

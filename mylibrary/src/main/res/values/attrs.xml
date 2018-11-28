@@ -18,6 +18,7 @@
             <enum name="rectangle" value="1"/>
         </attr>
         <attr name="multi_max_height" format="dimension"/>
+        <attr name="multi_max_lines" format="integer"/>
 
     </declare-styleable>
 
@@ -27,6 +28,7 @@
         <attr name="multi_flow_padding_horizontal" format="string"/>
         <attr name="multi_flow_padding_vertical" format="string"/>
         <attr name="multi_flow_max_height" format="dimension"/>
+        <attr name="multi_flow_max_lines" format="integer"/>
     </declare-styleable>
 
 </resources>
