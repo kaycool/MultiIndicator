@@ -1007,6 +1007,15 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
     fun getAdapter() = this.mMultiFlowAdapter
 
+    fun changedIndicatorColor(indicatorColor: Int) {
+        this.mIndicatorColor = indicatorColor
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            postInvalidateOnAnimation()
+        } else {
+            postInvalidate()
+        }
+    }
+
     fun changedAdapterUi(
         textSelectColor: Int = mTextSelectedColor,
         textSelectSize: Float = mTextSelectedSize,
