@@ -3,6 +3,7 @@ package com.kai.wang.space.indicator.lib
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Canvas
+import android.graphics.Color
 import android.nfc.Tag
 import android.os.Build
 import android.os.Parcelable
@@ -56,6 +57,10 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
     private var mMaxLines = -1
     private var mMaxSelectedCount = -1
     private var mMaxSelectedTips = ""
+    private var mTextSelectedColor = Color.RED
+    private var mTextUnSelectedColor = Color.BLACK
+    private var mTextSelectedSize = resources.getDimension(R.dimen.sp_10)
+    private var mTextUnSelectedSize = resources.getDimension(R.dimen.sp_10)
 
     private val mNestedScrollingChildHelper by lazy { NestedScrollingChildHelper(this) }
     private val mNestedScrollingParentHelper by lazy { NestedScrollingParentHelper(this) }
@@ -799,7 +804,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                 addView(view)
 
                 if (mSelectedView.contains(index)) {
-                    this.onSelected(view, index)
+                    this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor)
                 }
 
                 view.setOnClickListener {
@@ -807,12 +812,12 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                         var hasMaxLimit = false
                         if (mSelectedView.contains(index)) {
                             mSelectedView.remove(index)
-                            this.unSelected(view, index)
+                            this.unSelected(view, index, mTextUnSelectedSize, mTextUnSelectedColor)
                         } else {
                             hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size >= mMaxSelectedCount
                             if (!hasMaxLimit) {
                                 mSelectedView.add(index)
-                                this.onSelected(view, index)
+                                this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor)
                             }
                         }
                         if (hasMaxLimit) {
@@ -851,7 +856,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
             for (index in 0 until this.getItemCount()) {
                 val view = getChildAt(index)
                 if (mSelectedView.contains(index)) {
-                    this.onSelected(view, index)
+                    this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor)
                 }
 
                 view.setOnClickListener {
@@ -859,12 +864,12 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                         var hasMaxLimit = false
                         if (mSelectedView.contains(index)) {
                             mSelectedView.remove(index)
-                            this.unSelected(view, index)
+                            this.unSelected(view, index, mTextSelectedSize, mTextSelectedColor)
                         } else {
                             hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size <= mMaxSelectedCount
                             if (hasMaxLimit) {
                                 mSelectedView.add(index)
-                                this.onSelected(view, index)
+                                this.onSelected(view, index, mTextUnSelectedSize, mTextUnSelectedColor)
                             }
                         }
 

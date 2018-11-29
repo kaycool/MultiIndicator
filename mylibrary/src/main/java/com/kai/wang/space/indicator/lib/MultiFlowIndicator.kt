@@ -953,6 +953,19 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
     fun getAdapter() = this.mMultiFlowAdapter
 
+    fun changedAdapterUi(
+        textSelectColor: Int = mTextSelectedColor,
+        textSelectSize: Float = mTextSelectedSize,
+        textUnSelectColor: Int = mTextUnSelectedColor,
+        textUnSelectSize: Float = mTextUnSelectedSize
+    ) {
+        this.mTextSelectedColor = textSelectColor
+        this.mTextSelectedSize = textSelectSize
+        this.mTextUnSelectedColor = textUnSelectColor
+        this.mTextUnSelectedSize = textUnSelectSize
+        setPage(this.mViewPager.currentItem)
+    }
+
     private fun changeAdapter() {
         this.mMultiFlowAdapter?.let {
             removeAllViews()
@@ -1071,8 +1084,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         override fun onPageSelected(p0: Int) {
             mMultiFlowAdapter?.apply {
                 if (mPreSelectedTab != p0) {
-                    this.onSelected(this@MultiFlowIndicator.getChildAt(p0), p0)
-                    this.unSelected(this@MultiFlowIndicator.getChildAt(mPreSelectedTab), mPreSelectedTab)
+                    this.onSelected(this@MultiFlowIndicator.getChildAt(p0), p0, mTextSelectedSize, mTextSelectedColor)
+                    this.unSelected(
+                        this@MultiFlowIndicator.getChildAt(mPreSelectedTab),
+                        mPreSelectedTab,
+                        mTextUnSelectedSize,
+                        mTextUnSelectedColor
+                    )
                 }
             }
             mPreSelectedTab = p0
