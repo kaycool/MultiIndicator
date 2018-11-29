@@ -147,7 +147,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
             MultiFlowLayout.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
-                    measureChild(childView, widthMeasureSpec, heightMeasureSpec)
+                    measureChild(
+                        childView,
+                        MeasureSpec.makeMeasureSpec(mParentWidth - mPaddingHorizontal * 2, MeasureSpec.UNSPECIFIED),
+                        heightMeasureSpec
+                    )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
                     mMeasureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
                     if (measureHeight < childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin) {
@@ -759,7 +763,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     }
 
     fun getScrollRangeX(): Int {
-        return measuredWidth - mScreenWidth
+        return mMeasureWidth - mParentWidth
     }
 
     private fun initOrResetVelocityTracker() {
