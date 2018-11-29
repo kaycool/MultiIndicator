@@ -52,6 +52,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                 else -> 0
             }
         }
+    private var mParentWidth = 0
+    private var mMeasureWidth = 0
 
     /** 用于绘制显示器  */
     private var mPaddingHorizontal = 0
@@ -98,7 +100,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     private var mActivePointerId = INVALID_POINTER
     private val mOverScroller by lazy { OverScroller(context) }
     private lateinit var mVelocityTracker: VelocityTracker
-    private var mMode = MultiFlowIndicator.MODE.HORIZONL
+    private var mMode = MultiFlowIndicator.MODE.INVALID
     private var mPreSelectedTab = 0
     private var mCurrentTab = 0
     private var mCurrentTabOffsetPixel = 0
@@ -130,14 +132,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 //        mVerticalScrollFactor = configuration.scaledVerticalScrollFactor
 
         obtainAttributes(attrs)
-        this.mOnLayoutChanged?.changed(mMode.name)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val parentWidth = MeasureSpec.getSize(widthMeasureSpec)
+        mParentWidth = MeasureSpec.getSize(widthMeasureSpec)
 
-        var measureWidth = 0
+        mMeasureWidth = 0
         var measureHeight = 0
         var lineHeight = 0
         var lines = 0
@@ -148,14 +149,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     val childView = getChildAt(i)
                     measureChild(childView, widthMeasureSpec, heightMeasureSpec)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
-                    measureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
+                    mMeasureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
                     if (measureHeight < childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin) {
                         measureHeight = childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin +
                                 mPaddingVertical
                     }
 
                     if (i == childCount - 1) {
-                        measureWidth += mPaddingHorizontal
+                        mMeasureWidth += mPaddingHorizontal
                         measureHeight += mPaddingVertical
                     }
                 }
@@ -165,10 +166,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     val childView = getChildAt(i)
                     measureChild(
                         childView,
-                        MeasureSpec.makeMeasureSpec(
-                            parentWidth - mPaddingHorizontal * 2,
-                            MeasureSpec.AT_MOST
-                        ),
+                        MeasureSpec.makeMeasureSpec(mParentWidth - mPaddingHorizontal * 2, MeasureSpec.AT_MOST),
                         heightMeasureSpec
                     )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
@@ -176,9 +174,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                         childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
                     val childSpaceHeight =
                         childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin + mPaddingVertical
-                    measureWidth += childSpaceWidth
-                    if (measureWidth + paddingRight + paddingLeft > parentWidth) {
-                        measureWidth = childSpaceWidth
+                    mMeasureWidth += childSpaceWidth
+                    if (mMeasureWidth + paddingRight + paddingLeft > mParentWidth) {
+                        mMeasureWidth = childSpaceWidth
                         measureHeight += lineHeight + childSpaceHeight
                         if (lines < mMaxLines) {
                             mLinesMaxHeight += lineHeight
@@ -201,7 +199,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         }
 
         setMeasuredDimension(
-            Math.max(parentWidth, measureWidth + paddingLeft + paddingRight), when {
+            mParentWidth, when {
                 mMaxHeight > 0 -> Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
                 mLinesMaxHeight > 0 -> mLinesMaxHeight + paddingTop + paddingBottom + mPaddingVertical
                 else -> measureHeight + paddingTop + paddingBottom
@@ -634,7 +632,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     override fun canScrollHorizontally(direction: Int): Boolean {
         return if (direction > 0) {//right
             if (childCount > 0) {
-                scrollX < measuredWidth - mScreenWidth
+                scrollX < mMeasureWidth - mParentWidth
             } else {
                 false
             }
@@ -1078,7 +1076,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     }
 
     enum class MODE {
-        HORIZONL, VERTICAL
+        HORIZONL, VERTICAL, INVALID
     }
 
     companion object {
