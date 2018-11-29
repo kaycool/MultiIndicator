@@ -1020,13 +1020,21 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
         for (index in 0 until childCount) {
             mMultiFlowAdapter?.apply {
-                this.onSelected(this@MultiFlowIndicator.getChildAt(index), index, mTextSelectedSize, mTextSelectedColor)
-                this.unSelected(
-                    this@MultiFlowIndicator.getChildAt(mPreSelectedTab),
-                    mPreSelectedTab,
-                    mTextUnSelectedSize,
-                    mTextUnSelectedColor
-                )
+                if (index == this@MultiFlowIndicator.mViewPager.currentItem) {
+                    this.onSelected(
+                        this@MultiFlowIndicator.getChildAt(index),
+                        index,
+                        mTextSelectedSize,
+                        mTextSelectedColor
+                    )
+                } else {
+                    this.unSelected(
+                        this@MultiFlowIndicator.getChildAt(mPreSelectedTab),
+                        mPreSelectedTab,
+                        mTextUnSelectedSize,
+                        mTextUnSelectedColor
+                    )
+                }
             }
         }
     }
