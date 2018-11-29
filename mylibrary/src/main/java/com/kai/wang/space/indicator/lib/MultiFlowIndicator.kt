@@ -1029,8 +1029,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     )
                 } else {
                     this.unSelected(
-                        this@MultiFlowIndicator.getChildAt(mPreSelectedTab),
-                        mPreSelectedTab,
+                        this@MultiFlowIndicator.getChildAt(index),
+                        index,
                         mTextUnSelectedSize,
                         mTextUnSelectedColor
                     )
