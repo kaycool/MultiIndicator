@@ -1017,7 +1017,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
             when (mMode) {
                 MultiFlowIndicator.MODE.HORIZONL -> {
-                    if (childCount > scrollChildIndex && getScrollRangeX() > 0) {
+                    if (childCount > scrollChildIndex) {
                         val childView = getChildAt(scrollChildIndex)
                         val centerLeftX = childView.left + childView.measuredWidth.toFloat() / 2
                         var dx = (centerLeftX - measuredWidth.toFloat() / 2).toInt()
@@ -1035,7 +1035,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     }
                 }
                 MultiFlowIndicator.MODE.VERTICAL -> {
-                    if (childCount > scrollChildIndex && getScrollRangeY() > 0) {
+                    if (childCount > scrollChildIndex) {
                         val childView = getChildAt(scrollChildIndex)
                         val centerTopY = childView.top + childView.measuredHeight.toFloat() / 2
                         var dy = (centerTopY - measuredHeight.toFloat() / 2).toInt()
