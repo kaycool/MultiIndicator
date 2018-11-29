@@ -52,7 +52,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                 else -> 0
             }
         }
-    private var mParentWidth = 0
     private var mMeasureWidth = 0
 
     /** 用于绘制显示器  */
@@ -136,7 +135,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        mParentWidth = MeasureSpec.getSize(widthMeasureSpec)
+        val parentWidth = MeasureSpec.getSize(widthMeasureSpec)
 
         mMeasureWidth = 0
         var measureHeight = 0
@@ -149,7 +148,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     val childView = getChildAt(i)
                     measureChild(
                         childView,
-                        MeasureSpec.makeMeasureSpec(mParentWidth - mPaddingHorizontal * 2, MeasureSpec.UNSPECIFIED),
+                        MeasureSpec.makeMeasureSpec(parentWidth - mPaddingHorizontal * 2, MeasureSpec.UNSPECIFIED),
                         heightMeasureSpec
                     )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
@@ -170,7 +169,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     val childView = getChildAt(i)
                     measureChild(
                         childView,
-                        MeasureSpec.makeMeasureSpec(mParentWidth - mPaddingHorizontal * 2, MeasureSpec.AT_MOST),
+                        MeasureSpec.makeMeasureSpec(parentWidth - mPaddingHorizontal * 2, MeasureSpec.AT_MOST),
                         heightMeasureSpec
                     )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
@@ -179,7 +178,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     val childSpaceHeight =
                         childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin + mPaddingVertical
                     mMeasureWidth += childSpaceWidth
-                    if (mMeasureWidth + paddingRight + paddingLeft > mParentWidth) {
+                    if (mMeasureWidth + paddingRight + paddingLeft > parentWidth) {
                         mMeasureWidth = childSpaceWidth
                         measureHeight += lineHeight + childSpaceHeight
                         if (lines < mMaxLines) {
@@ -203,7 +202,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         }
 
         setMeasuredDimension(
-            mParentWidth, when {
+            parentWidth, when {
                 mMaxHeight > 0 -> Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
                 mLinesMaxHeight > 0 -> mLinesMaxHeight + paddingTop + paddingBottom + mPaddingVertical
                 else -> measureHeight + paddingTop + paddingBottom
@@ -636,7 +635,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     override fun canScrollHorizontally(direction: Int): Boolean {
         return if (direction > 0) {//right
             if (childCount > 0) {
-                scrollX < mMeasureWidth - mParentWidth
+                scrollX < getScrollRangeX()
             } else {
                 false
             }
@@ -763,7 +762,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     }
 
     fun getScrollRangeX(): Int {
-        return mMeasureWidth - mParentWidth
+        return if (mMeasureWidth - measuredWidth < 0) {
+            0
+        } else {
+            mMeasureWidth - measuredWidth
+        }
     }
 
     private fun initOrResetVelocityTracker() {
@@ -856,6 +859,57 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         }
     }
 
+    private fun autoScrollHorizontal() {
+        if (childCount > this.mCurrentTab) {
+            val drawChildView = getChildAt(this.mCurrentTab)
+            var left = drawChildView.left.toFloat()
+            var right = drawChildView.right.toFloat()
+            var top = drawChildView.top.toFloat()
+            var bottom = drawChildView.bottom.toFloat()
+
+            if (mIndicatorEqualsTitle) {
+                left = drawChildView.left.toFloat() + drawChildView.paddingLeft
+                right = drawChildView.right.toFloat() - drawChildView.paddingRight
+            }
+
+            when (mIndicatorStyle) {
+                STYLE_NORMAL -> {
+                    bottom = drawChildView.bottom.toFloat()
+                    top = bottom - mIndicatorHeight
+                }
+
+                STYLE_RECTANGLE -> {
+                    top = drawChildView.top.toFloat()
+                    bottom = drawChildView.bottom.toFloat()
+                }
+            }
+
+            if (this.mCurrentTab < childCount - 1) {
+                val nextDrawChildView = getChildAt(this.mCurrentTab + 1)
+
+                val nextTabLeft = nextDrawChildView.left
+                val nextTabRight = nextDrawChildView.right
+                val nextTabTop = nextDrawChildView.top
+                val nextTabBottom = nextDrawChildView.bottom
+
+                left += mCurrentTabOffset * (nextTabLeft - left)
+                right += mCurrentTabOffset * (nextTabRight - right)
+
+                when (mIndicatorStyle) {
+                    STYLE_NORMAL -> {
+                        bottom += mCurrentTabOffset * (nextTabBottom - bottom)
+                        top = bottom - mIndicatorHeight
+                    }
+
+                    STYLE_RECTANGLE -> {
+                        top += mCurrentTabOffset * (nextTabTop - top)
+                        bottom += mCurrentTabOffset * (nextTabBottom - bottom)
+                    }
+                }
+            }
+
+        }
+    }
 
     fun setViewPager(viewPager: ViewPager) {
         this.mViewPager = viewPager
@@ -963,7 +1017,18 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         this.mTextSelectedSize = textSelectSize
         this.mTextUnSelectedColor = textUnSelectColor
         this.mTextUnSelectedSize = textUnSelectSize
-        setPage(this.mViewPager.currentItem)
+
+        for (index in 0 until childCount) {
+            mMultiFlowAdapter?.apply {
+                this.onSelected(this@MultiFlowIndicator.getChildAt(index), index, mTextSelectedSize, mTextSelectedColor)
+                this.unSelected(
+                    this@MultiFlowIndicator.getChildAt(mPreSelectedTab),
+                    mPreSelectedTab,
+                    mTextUnSelectedSize,
+                    mTextUnSelectedColor
+                )
+            }
+        }
     }
 
     private fun changeAdapter() {
