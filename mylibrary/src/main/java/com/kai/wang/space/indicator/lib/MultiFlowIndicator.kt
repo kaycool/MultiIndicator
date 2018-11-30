@@ -313,11 +313,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     mNestedYOffset = 0
                     parent?.requestDisallowInterceptTouchEvent(true)
 
-                    ev.action = MotionEvent.ACTION_CANCEL
-                    val obtain = MotionEvent.obtain(ev)
-                    obtain.action = MotionEvent.ACTION_DOWN
-                    dispatchTouchEvent(obtain)
-                    return dispatchTouchEvent(ev)
+//                    ev.action = MotionEvent.ACTION_CANCEL
+//                    val obtain = MotionEvent.obtain(ev)
+//                    obtain.action = MotionEvent.ACTION_DOWN
+//                    dispatchTouchEvent(obtain)
+//                    return dispatchTouchEvent(ev)
                 }
             }
 
@@ -1001,7 +1001,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
     fun setPage(position: Int) {
         if (this.mViewPager.adapter?.count ?: return > position) {
-            this.mViewPager.currentItem = position
+            this.mViewPager.setCurrentItem(position, false)
         }
     }
 
