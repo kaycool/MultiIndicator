@@ -1199,7 +1199,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         private val KEY_MODE = "key_mode"
         private val KEY_ADAPTER = "key_adapter"
 
-        private interface ItemClickCallback {
+        interface ItemClickCallback {
             fun callback(position: Int): Boolean = true
         }
 
