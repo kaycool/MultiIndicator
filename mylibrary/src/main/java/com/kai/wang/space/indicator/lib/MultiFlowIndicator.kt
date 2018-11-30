@@ -290,7 +290,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         when (ev.action) {
             MotionEvent.ACTION_DOWN -> {
                 if (mIsBeingDragged) {//回调down事件为己用
-                    onTouchEvent(ev)
                     initOrResetVelocityTracker()
                     mVelocityTracker.addMovement(ev)
                 }
@@ -314,11 +313,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     mNestedYOffset = 0
                     parent?.requestDisallowInterceptTouchEvent(true)
 
-                    ev.action = MotionEvent.ACTION_CANCEL
                     val obtain = MotionEvent.obtain(ev)
                     obtain.action = MotionEvent.ACTION_DOWN
-                    dispatchTouchEvent(ev)
-                    return dispatchTouchEvent(obtain)
+//                    ev.action = MotionEvent.ACTION_CANCEL
+                    dispatchTouchEvent(obtain)
+                    return dispatchTouchEvent(ev)
                 }
             }
 
@@ -767,6 +766,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
             mMeasureWidth - measuredWidth
         }
     }
+
+    fun couldExtpand() = getScrollRangeX() > 0 || mMode == MODE.VERTICAL
 
     private fun initOrResetVelocityTracker() {
         if (!this::mVelocityTracker.isInitialized) {
