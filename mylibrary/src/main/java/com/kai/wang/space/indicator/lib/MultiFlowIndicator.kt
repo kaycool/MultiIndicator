@@ -1013,6 +1013,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         }
     }
 
+    fun getPage() = this.mViewPager.currentItem
+
     fun getAdapter() = this.mMultiFlowAdapter
 
     fun changedIndicatorColor(indicatorColor: Int) {
