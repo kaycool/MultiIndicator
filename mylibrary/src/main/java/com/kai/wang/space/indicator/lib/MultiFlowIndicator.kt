@@ -312,7 +312,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     initVelocityTrackerIfNotExists()
                     mVelocityTracker.addMovement(ev)
                     mNestedYOffset = 0
-                    val parent = parent
                     parent?.requestDisallowInterceptTouchEvent(true)
 
                     ev.action = MotionEvent.ACTION_CANCEL
