@@ -313,9 +313,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     mNestedYOffset = 0
                     parent?.requestDisallowInterceptTouchEvent(true)
 
+                    ev.action = MotionEvent.ACTION_CANCEL
                     val obtain = MotionEvent.obtain(ev)
                     obtain.action = MotionEvent.ACTION_DOWN
-//                    ev.action = MotionEvent.ACTION_CANCEL
                     dispatchTouchEvent(obtain)
                     return dispatchTouchEvent(ev)
                 }
