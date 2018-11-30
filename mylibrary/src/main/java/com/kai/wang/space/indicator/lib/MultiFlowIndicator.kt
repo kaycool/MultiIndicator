@@ -1057,7 +1057,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     }
 
     private fun changeAdapter() {
-        this.mMultiFlowAdapter?.let {
+        this.mMultiFlowAdapter?.also {
             removeAllViews()
             for (index in 0 until it.getItemCount()) {
                 val view = it.getView(this, index)
@@ -1067,6 +1067,22 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     if (mItemClickCallback?.callback(index) == true) {
                         this.mViewPager.setCurrentItem(index, false)
                     }
+                }
+
+                if (index == this@MultiFlowIndicator.mViewPager.currentItem) {
+                    it.onSelected(
+                        view,
+                        index,
+                        mTextSelectedSize,
+                        mTextSelectedColor
+                    )
+                } else {
+                    it.unSelected(
+                        view,
+                        index,
+                        mTextUnSelectedSize,
+                        mTextUnSelectedColor
+                    )
                 }
             }
         }
