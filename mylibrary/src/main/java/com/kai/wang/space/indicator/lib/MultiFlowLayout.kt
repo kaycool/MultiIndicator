@@ -898,7 +898,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         val TAG = "MultiFlowLayout"
 
 
-        interface ItemClickCallback {
+        private interface ItemClickCallback {
             fun callback(position: Int): Boolean = true
 
             fun limitClick()

@@ -7,11 +7,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
-import android.nfc.tech.MifareClassic.KEY_DEFAULT
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
-import android.support.v4.content.res.TypedArrayUtils.obtainAttributes
 import android.support.v4.view.NestedScrollingChild
 import android.support.v4.view.NestedScrollingChildHelper
 import android.support.v4.view.NestedScrollingParentHelper
@@ -107,10 +105,10 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
     private var mCurrentTabOffsetPixel = 0
     private var mCurrentTabOffset = 0f
 
-    private var mItemClickCallback: MultiFlowLayout.Companion.ItemClickCallback? = null
+    private var mItemClickCallback: ItemClickCallback? = null
     private var mOnLayoutChanged: OnLayoutChanged? = null
 
-    fun setItemClickCallback(itemClickCallback: MultiFlowLayout.Companion.ItemClickCallback) {
+    fun setItemClickCallback(itemClickCallback: ItemClickCallback) {
         this.mItemClickCallback = itemClickCallback
     }
 
@@ -382,7 +380,10 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
 
 
                 if (dispatchNestedPreScroll(delX, delY, mScrollConsumed, mScrollOffset)) {
-                    Log.d(TAG,"dispatchNestedPreScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}")
+                    Log.d(
+                        TAG,
+                        "dispatchNestedPreScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}"
+                    )
                     delX -= mScrollConsumed[0]
                     delY -= mScrollConsumed[1]
                     event.offsetLocation(0f, mScrollOffset[1].toFloat())
@@ -413,7 +414,10 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                 if (dispatchNestedScroll(0, scrolledDeltaY, 0, unconsumedY, mScrollOffset)) run {
                     mLastX -= mScrollOffset[0]
                     mLastY -= mScrollOffset[1]
-                    Log.d(TAG,"dispatchNestedScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}")
+                    Log.d(
+                        TAG,
+                        "dispatchNestedScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}"
+                    )
                     event.offsetLocation(0f, mScrollOffset[1].toFloat())
                     mNestedYOffset += mScrollOffset[1]
                 } else {
@@ -1195,7 +1199,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
         private val KEY_MODE = "key_mode"
         private val KEY_ADAPTER = "key_adapter"
 
-        interface ItemClickCallback {
+        private interface ItemClickCallback {
             fun callback(position: Int): Boolean = true
         }
 
