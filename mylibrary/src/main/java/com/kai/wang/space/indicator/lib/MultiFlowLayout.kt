@@ -88,14 +88,14 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
     private var mCurrentTabOffsetPixel = 0
     private var mCurrentTabOffset = 0f
 
-    private var mItemClickCallback: ItemClickCallback? = null
-    private var mOnLayoutChanged: MultiFlowIndicator.Companion.OnLayoutChanged? = null
+    private var mItemClickCallback: MultiFlowLayout.Companion.ItemClickCallback? = null
+    private var mOnLayoutChanged: MultiFlowLayout.Companion.OnLayoutChanged? = null
 
-    fun setItemClickCallback(itemClickCallback: ItemClickCallback) {
+    fun setItemClickCallback(itemClickCallback: MultiFlowLayout.Companion.ItemClickCallback) {
         this.mItemClickCallback = itemClickCallback
     }
 
-    fun setOnLayoutChanged(onLayoutChanged: MultiFlowIndicator.Companion.OnLayoutChanged) {
+    fun setOnLayoutChanged(onLayoutChanged: MultiFlowLayout.Companion.OnLayoutChanged) {
         this.mOnLayoutChanged = onLayoutChanged
     }
 
@@ -898,10 +898,14 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
         val TAG = "MultiFlowLayout"
 
 
-        private interface ItemClickCallback {
+        interface ItemClickCallback {
             fun callback(position: Int): Boolean = true
 
             fun limitClick()
+        }
+
+        interface OnLayoutChanged {
+            fun changed(mode: String)
         }
     }
 }

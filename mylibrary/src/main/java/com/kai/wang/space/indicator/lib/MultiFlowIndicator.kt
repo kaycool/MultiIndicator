@@ -932,6 +932,27 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
             this.mViewPager.adapter?.count ?: 0 > this.mMultiFlowAdapter?.getItemCount() ?: 0 -> throw IllegalArgumentException(
                 "MultiFlowIndicator title length must be > viewpager page length"
             )
+            else -> {
+                this.mMultiFlowAdapter?.also {
+                    for (index in 0 until it.getItemCount()) {
+                        if (index == this@MultiFlowIndicator.mViewPager.currentItem) {
+                            it.onSelected(
+                                getChildAt(index),
+                                index,
+                                mTextSelectedSize,
+                                mTextSelectedColor
+                            )
+                        } else {
+                            it.unSelected(
+                                getChildAt(index),
+                                index,
+                                mTextUnSelectedSize,
+                                mTextUnSelectedColor
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1069,22 +1090,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingChild, OnDataChangedListene
                     if (mItemClickCallback?.callback(index) == true) {
                         this.mViewPager.setCurrentItem(index, false)
                     }
-                }
-
-                if (index == this@MultiFlowIndicator.mViewPager.currentItem) {
-                    it.onSelected(
-                        view,
-                        index,
-                        mTextSelectedSize,
-                        mTextSelectedColor
-                    )
-                } else {
-                    it.unSelected(
-                        view,
-                        index,
-                        mTextUnSelectedSize,
-                        mTextUnSelectedColor
-                    )
                 }
             }
         }
