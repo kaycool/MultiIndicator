@@ -353,7 +353,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             return false
         }
         initVelocityTrackerIfNotExists()
-        mActivePointerId = event.getPointerId(pointerIndex)
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
                 Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_DOWN")
@@ -375,7 +374,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             }
             MotionEvent.ACTION_MOVE -> {
                 parent?.requestDisallowInterceptTouchEvent(true)
-
                 mNestedXOffset = 0
                 mNestedYOffset = 0
 
@@ -399,21 +397,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
                 val oldX = scrollX
                 val oldY = scrollY
-//                if (overScrollBy(
-//                        delX,
-//                        delY,
-//                        scrollX,
-//                        scrollY,
-//                        getScrollRangeX(),
-//                        getScrollRangeY(),
-//                        mOverscrollDistance,
-//                        mOverscrollDistance,
-//                        true
-//                    ) && !hasNestedScrollingParent()
-//                ) {
-//                    // Break our velocity if we hit a scroll barrier.
-//                    mVelocityTracker.clear()
-//                }
 
                 val scrolledDeltaX = scrollX - oldX
                 val scrolledDeltaY = scrollY - oldY
@@ -446,13 +429,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                             }
 
                             scrollBy(dx, 0)
-//                            mOverScroller.startScroll(
-//                                scrollX,
-//                                0,
-//                                dx,
-//                                0
-//                            )
-//                            ViewCompat.postInvalidateOnAnimation(this)
                         }
 
                         getScrollRangeY() > 0 -> {
@@ -464,15 +440,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                             }
 
                             scrollBy(0, dy)
-
-//                            mOverScroller.startScroll(
-//                                0,
-//                                scrollY,
-//                                0,
-//                                dy
-//                            )
-//
-//                            ViewCompat.postInvalidateOnAnimation(this)
                         }
                         else -> {
                         }
@@ -563,7 +530,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 mLastY = event.getY(pointerIndex)
                 mLastMotionX = event.getX(pointerIndex)
                 mLastMotionY = event.getY(pointerIndex)
-                mActivePointerId = event.getPointerId(pointerIndex)
+                mActivePointerId = event.getPointerId(0)
             }
 
             MotionEvent.ACTION_POINTER_DOWN -> {
@@ -573,15 +540,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     mLastY = event.getY(pointerIndex)
                     mLastMotionX = event.getX(pointerIndex)
                     mLastMotionY = event.getY(pointerIndex)
-                    mActivePointerId = event.getPointerId(pointerIndex)
+                    mActivePointerId = pointerId
                 }
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (mActivePointerId == INVALID_POINTER) {
-                    // If we don't have a valid id, the touch down wasn't on content.
-                    return
-                }
                 val pointerIndex1 = event.findPointerIndex(mActivePointerId)
                 val moveX = event.getX(pointerIndex1)
                 val moveY = event.getY(pointerIndex1)
@@ -601,6 +564,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     }
                     mLastX = event.getX(newPointerIndex)
                     mLastY = event.getY(newPointerIndex)
+                    mLastMotionX = event.getX(newPointerIndex)
+                    mLastMotionY = event.getY(newPointerIndex)
                     mActivePointerId = event.getPointerId(newPointerIndex)
                 }
             }
