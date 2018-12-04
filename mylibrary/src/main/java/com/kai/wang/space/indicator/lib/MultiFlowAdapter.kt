@@ -19,9 +19,21 @@ abstract class MultiFlowAdapter<out T>(val mutiDatas: MutableList<out T>) : Seri
 
     abstract fun getView(parent: ViewGroup, position: Int): View
 
-    abstract fun onSelected(view: View, position: Int, selectTextSize: Float, selectTextColor: Int)
+    abstract fun onSelected(
+        view: View,
+        position: Int,
+        selectTextSize: Float,
+        selectTextColor: Int,
+        selectIconColor: Int
+    )
 
-    abstract fun unSelected(view: View, position: Int, unSelectTextSize: Float, unSelectTextColor: Int)
+    abstract fun unSelected(
+        view: View,
+        position: Int,
+        unSelectTextSize: Float,
+        unSelectTextColor: Int,
+        unSelectIconColor: Int
+    )
 
     fun getItem(position: Int): T = mMutiDatas[position]
 

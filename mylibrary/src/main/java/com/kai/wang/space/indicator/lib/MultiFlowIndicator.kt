@@ -57,7 +57,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     private val mIndicatorRect = Rect()
     private val mIndicatorDrawable = GradientDrawable()
     private var mTextSelectedColor = Color.RED
+    private var mIconSelectedColor = Color.RED
     private var mTextUnSelectedColor = Color.BLACK
+    private var mIconUnSelectedColor = Color.BLACK
     private var mTextSelectedSize = resources.getDimension(R.dimen.sp_10)
     private var mTextUnSelectedSize = resources.getDimension(R.dimen.sp_10)
     private var mIndicatorHeight = resources.getDimension(R.dimen.dimen_3)
@@ -324,6 +326,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_UP,ACTION_CANCEL")
+                mIsNeedIntercept = false
             }
 
             MotionEvent.ACTION_POINTER_UP -> {
@@ -350,9 +353,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             return false
         }
         initVelocityTrackerIfNotExists()
-        if (mIsNeedIntercept) {
-            parent?.requestDisallowInterceptTouchEvent(true)
-        }
         mActivePointerId = event.getPointerId(pointerIndex)
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
@@ -374,6 +374,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 ViewCompat.startNestedScroll(this@MultiFlowIndicator, View.SCROLL_AXIS_VERTICAL)
             }
             MotionEvent.ACTION_MOVE -> {
+                parent?.requestDisallowInterceptTouchEvent(true)
+
                 mNestedXOffset = 0
                 mNestedYOffset = 0
 
@@ -382,7 +384,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
                 var delX = (mLastMotionX - moveX).toInt()
                 var delY = (mLastMotionY - moveY).toInt()
-
 
                 if (dispatchNestedPreScroll(delX, delY, mScrollConsumed, mScrollOffset)) {
                     Log.d(
@@ -418,7 +419,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 val scrolledDeltaY = scrollY - oldY
                 val unconsumedX = delX - scrolledDeltaX
                 val unconsumedY = delY - scrolledDeltaY
-                if (dispatchNestedScroll(scrolledDeltaX, scrolledDeltaY, unconsumedX, unconsumedY, mScrollOffset)) run {
+                if (dispatchNestedScroll(
+                        scrolledDeltaX,
+                        scrolledDeltaY,
+                        unconsumedX,
+                        unconsumedY,
+                        mScrollOffset
+                    )
+                ) run {
                     mLastMotionX -= mScrollOffset[0]
                     mLastMotionY -= mScrollOffset[1]
                     Log.d(
@@ -475,6 +483,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
                 mLastMotionX = moveX - mScrollOffset[0]
                 mLastMotionY = moveY - mScrollOffset[1]
+
             }
             MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
                 Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_UP,ACTION_CANCEL")
@@ -611,6 +620,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             val isOnLeft = !canScrollHorizontally(-1)
             val isOnRight = !canScrollHorizontally(1)
             when {
+                mDeltaX == 0f -> false
                 mDeltaX > 0 && isOnLeft -> false
                 mDeltaX < 0 && isOnRight -> false
                 else -> true
@@ -622,6 +632,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             val isOnBottom = !canScrollVertically(1)
 
             when {
+                mDeltaY == 0f -> false
                 mDeltaY > 0 && isOnTop -> false
                 mDeltaY < 0 && isOnBottom -> false
                 else -> true
@@ -731,7 +742,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             val a = context.obtainStyledAttributes(attrs, R.styleable.MultiIndicator)
 
             mTextSelectedColor = a.getColor(R.styleable.MultiIndicator_multi_text_selected_color, Color.RED)
+            mIconSelectedColor = a.getColor(R.styleable.MultiIndicator_multi_icon_selected_color, Color.RED)
             mTextUnSelectedColor = a.getColor(R.styleable.MultiIndicator_multi_text_unselected_color, Color.BLACK)
+            mIconUnSelectedColor = a.getColor(R.styleable.MultiIndicator_multi_icon_unselected_color, Color.BLACK)
             mTextSelectedSize = a.getDimension(
                 R.styleable.MultiIndicator_multi_text_selected_size,
                 resources.getDimension(R.dimen.sp_10)
@@ -962,14 +975,16 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                                 getChildAt(index),
                                 index,
                                 mTextSelectedSize,
-                                mTextSelectedColor
+                                mTextSelectedColor,
+                                mIconSelectedColor
                             )
                         } else {
                             it.unSelected(
                                 getChildAt(index),
                                 index,
                                 mTextUnSelectedSize,
-                                mTextUnSelectedColor
+                                mTextUnSelectedColor,
+                                mIconUnSelectedColor
                             )
                         }
                     }
@@ -1059,8 +1074,10 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
     fun changedAdapterUi(
         textSelectColor: Int = mTextSelectedColor,
+        iconSelectColor: Int = mIconSelectedColor,
         textSelectSize: Float = mTextSelectedSize,
         textUnSelectColor: Int = mTextUnSelectedColor,
+        iconUnSelectColor: Int = mIconUnSelectedColor,
         textUnSelectSize: Float = mTextUnSelectedSize
     ) {
         this.mTextSelectedColor = textSelectColor
@@ -1075,14 +1092,16 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                         this@MultiFlowIndicator.getChildAt(index),
                         index,
                         mTextSelectedSize,
-                        mTextSelectedColor
+                        mTextSelectedColor,
+                        iconSelectColor
                     )
                 } else {
                     this.unSelected(
                         this@MultiFlowIndicator.getChildAt(index),
                         index,
                         mTextUnSelectedSize,
-                        mTextUnSelectedColor
+                        mTextUnSelectedColor,
+                        iconUnSelectColor
                     )
                 }
             }
@@ -1097,7 +1116,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 view.layoutParams = generateDefaultLayoutParams()
                 addView(view)
                 view.setOnClickListener {
-                    if (mItemClickCallback?.callback(index) == true) {
+                    if (mItemClickCallback == null || mItemClickCallback?.callback(index) == true) {
                         this.mViewPager.setCurrentItem(index, false)
                     }
                 }
@@ -1203,12 +1222,19 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
         override fun onPageSelected(p0: Int) {
             mMultiFlowAdapter?.apply {
                 if (mPreSelectedTab != p0) {
-                    this.onSelected(this@MultiFlowIndicator.getChildAt(p0), p0, mTextSelectedSize, mTextSelectedColor)
+                    this.onSelected(
+                        this@MultiFlowIndicator.getChildAt(p0),
+                        p0,
+                        mTextSelectedSize,
+                        mTextSelectedColor,
+                        mIconSelectedColor
+                    )
                     this.unSelected(
                         this@MultiFlowIndicator.getChildAt(mPreSelectedTab),
                         mPreSelectedTab,
                         mTextUnSelectedSize,
-                        mTextUnSelectedColor
+                        mTextUnSelectedColor,
+                        mIconUnSelectedColor
                     )
                 }
             }

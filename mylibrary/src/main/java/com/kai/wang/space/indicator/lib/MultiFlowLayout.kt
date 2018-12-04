@@ -58,7 +58,9 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
     private var mMaxSelectedCount = -1
     private var mMaxSelectedTips = ""
     private var mTextSelectedColor = Color.RED
+    private var mIconSelectedColor = Color.RED
     private var mTextUnSelectedColor = Color.BLACK
+    private var mIconUnSelectedColor = Color.BLACK
     private var mTextSelectedSize = resources.getDimension(R.dimen.sp_10)
     private var mTextUnSelectedSize = resources.getDimension(R.dimen.sp_10)
 
@@ -804,7 +806,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                 addView(view)
 
                 if (mSelectedView.contains(index)) {
-                    this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor)
+                    this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor, mIconSelectedColor)
                 }
 
                 view.setOnClickListener {
@@ -812,12 +814,18 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                         var hasMaxLimit = false
                         if (mSelectedView.contains(index)) {
                             mSelectedView.remove(index)
-                            this.unSelected(view, index, mTextUnSelectedSize, mTextUnSelectedColor)
+                            this.unSelected(
+                                view,
+                                index,
+                                mTextUnSelectedSize,
+                                mTextUnSelectedColor,
+                                mIconUnSelectedColor
+                            )
                         } else {
                             hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size >= mMaxSelectedCount
                             if (!hasMaxLimit) {
                                 mSelectedView.add(index)
-                                this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor)
+                                this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor, mIconSelectedColor)
                             }
                         }
                         if (hasMaxLimit) {
@@ -856,7 +864,7 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
             for (index in 0 until this.getItemCount()) {
                 val view = getChildAt(index)
                 if (mSelectedView.contains(index)) {
-                    this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor)
+                    this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor,mIconSelectedColor)
                 }
 
                 view.setOnClickListener {
@@ -864,12 +872,18 @@ class MultiFlowLayout : ViewGroup, NestedScrollingChild, OnDataChangedListener {
                         var hasMaxLimit = false
                         if (mSelectedView.contains(index)) {
                             mSelectedView.remove(index)
-                            this.unSelected(view, index, mTextSelectedSize, mTextSelectedColor)
+                            this.unSelected(view, index, mTextSelectedSize, mTextSelectedColor, mIconUnSelectedColor)
                         } else {
                             hasMaxLimit = mMaxSelectedCount > 0 && mSelectedView.size <= mMaxSelectedCount
                             if (hasMaxLimit) {
                                 mSelectedView.add(index)
-                                this.onSelected(view, index, mTextUnSelectedSize, mTextUnSelectedColor)
+                                this.onSelected(
+                                    view,
+                                    index,
+                                    mTextSelectedSize,
+                                    mTextSelectedColor,
+                                    mIconSelectedColor
+                                )
                             }
                         }
 

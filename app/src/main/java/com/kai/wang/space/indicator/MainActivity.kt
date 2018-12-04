@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.kai.wang.space.indicator.lib.MultiFlowAdapter
+import com.kai.wang.space.indicator.lib.MultiFlowIndicator
 import kotlinx.android.synthetic.main.activity_test.*
 
 class MainActivity : AppCompatActivity() {
@@ -111,6 +112,35 @@ class MainActivity : AppCompatActivity() {
 
         }
         spaceFlowIndicator.setAdapter(object : MultiFlowAdapter<String>(mTitles) {
+            override fun onSelected(
+                view: View,
+                position: Int,
+                selectTextSize: Float,
+                selectTextColor: Int,
+                selectIconColor: Int
+            ) {
+                (view as? TextView)?.setTextColor(
+                    ContextCompat.getColor(
+                        applicationContext,
+                        android.R.color.holo_red_light
+                    )
+                )
+            }
+
+            override fun unSelected(
+                view: View,
+                position: Int,
+                unSelectTextSize: Float,
+                unSelectTextColor: Int,
+                unSelectIconColor: Int
+            ) {
+                (view as? TextView)?.setTextColor(
+                    ContextCompat.getColor(
+                        applicationContext,
+                        android.R.color.black
+                    )
+                )
+            }
 
             override fun getView(parent: ViewGroup, position: Int): View {
                 val textView = TextView(applicationContext)
@@ -124,27 +154,8 @@ class MainActivity : AppCompatActivity() {
                 return textView
             }
 
-            override fun onSelected(view: View, position: Int, selectTextSize: Float, selectTextColor: Int) {
-                (view as? TextView)?.setTextColor(
-                    ContextCompat.getColor(
-                        applicationContext,
-                        android.R.color.holo_red_light
-                    )
-                )
-            }
-
-            override fun unSelected(view: View, position: Int, unSelectTextSize: Float, unSelectTextColor: Int) {
-                (view as? TextView)?.setTextColor(
-                    ContextCompat.getColor(
-                        applicationContext,
-                        android.R.color.black
-                    )
-                )
-            }
-
         })
         spaceFlowIndicator.setViewPager(viewPager)
-//
 //        spaceIndicator.setViewPager(viewPager)
 
     }

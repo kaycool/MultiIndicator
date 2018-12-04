@@ -5,8 +5,10 @@
     <declare-styleable name="MultiIndicator">
 
         <attr name="multi_text_selected_color" format="color"/>
+        <attr name="multi_icon_selected_color" format="color"/>
         <attr name="multi_text_selected_size" format="dimension"/>
         <attr name="multi_text_unselected_color" format="color"/>
+        <attr name="multi_icon_unselected_color" format="color"/>
         <attr name="multi_text_unselected_size" format="dimension"/>
         <attr name="multi_indicator_color" format="color"/>
         <attr name="multi_indicator_height" format="dimension"/>

@@ -54,6 +54,29 @@ class FlowFragment : Fragment() {
     }
 
     private val mAdapter = object : MultiFlowAdapter<String>(mFlows) {
+        override fun onSelected(
+            view: View,
+            position: Int,
+            selectTextSize: Float,
+            selectTextColor: Int,
+            selectIconColor: Int
+        ) {
+            (view as TextView)?.apply {
+                this.setTextColor(Color.RED)
+            }
+        }
+
+        override fun unSelected(
+            view: View,
+            position: Int,
+            unSelectTextSize: Float,
+            unSelectTextColor: Int,
+            unSelectIconColor: Int
+        ) {
+            (view as TextView)?.apply {
+                this.setTextColor(Color.GRAY)
+            }
+        }
 
         override fun getView(parent: ViewGroup, position: Int): View {
             val textView = TextView(activity!!.applicationContext)
@@ -62,17 +85,6 @@ class FlowFragment : Fragment() {
             return textView
         }
 
-        override fun onSelected(view: View, position: Int, selectTextSize: Float, selectTextColor: Int) {
-            (view as TextView)?.apply {
-                this.setTextColor(Color.RED)
-            }
-        }
-
-        override fun unSelected(view: View, position: Int, unSelectTextSize: Float, unSelectTextColor: Int) {
-            (view as TextView)?.apply {
-                this.setTextColor(Color.GRAY)
-            }
-        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
