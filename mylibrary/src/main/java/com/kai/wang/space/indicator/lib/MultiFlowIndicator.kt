@@ -79,6 +79,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     private val mNestedScrollingChildHelper by lazy { NestedScrollingChildHelper(this) }
     private val mNestedScrollingParentHelper by lazy { NestedScrollingParentHelper(this) }
     private var mIsBeingDragged = false
+    private var mIsNeedIntercept: Boolean = false
     private var mTouchSlop: Int = 0
     private var mMinimumVelocity: Int = 0
     private var mMaximumVelocity: Int = 0
@@ -86,9 +87,12 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     private var mOverflingDistance: Int = 0
     private val mScrollOffset = IntArray(2)
     private val mScrollConsumed = IntArray(2)
+    private var mNestedXOffset: Int = 0
     private var mNestedYOffset: Int = 0
     private var mLastX = 0f
     private var mLastY = 0f
+    private var mLastMotionX = 0f
+    private var mLastMotionY = 0f
     private var mDeltaX = 0f
     private var mDeltaY = 0f
 
@@ -281,45 +285,48 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
         }
     }
 
-
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         dealMultiTouchEvent(ev)
         when (ev.action) {
             MotionEvent.ACTION_DOWN -> {
-                if (mIsBeingDragged) {//回调down事件为己用
-                    initOrResetVelocityTracker()
-                    mVelocityTracker.addMovement(ev)
+                Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_DOWN")
+                when {
+                    getScrollRangeX() > 0 -> {
+                        val isOnLeft = !canScrollHorizontally(-1)
+                        val isOnRight = !canScrollHorizontally(1)
+                        if (isOnLeft || isOnRight) {
+                            mIsNeedIntercept = false
+                        }
+                    }
+
+                    getScrollRangeY() > 0 -> {
+                        val isOnTop = !canScrollVertically(-1)
+                        val isOnBottom = !canScrollVertically(1)
+
+                        if (isOnTop || isOnBottom) {
+                            mIsNeedIntercept = false
+                        }
+                    }
                 }
             }
             MotionEvent.ACTION_MOVE -> {
-                // disable move when header not reach top
-                val activePointerId = mActivePointerId
-                if (activePointerId == INVALID_POINTER) {
-                    // If we don't have a valid id, the touch down wasn't on content.
-                    return mIsBeingDragged
-                }
-
-                val pointerIndex = ev.findPointerIndex(activePointerId)
-                if (pointerIndex == -1) {
-                    return mIsBeingDragged
-                }
-                if (Math.abs(mDeltaX) > mTouchSlop || Math.abs(mDeltaY) > mTouchSlop) {
+                Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_MOVE")
+                mIsNeedIntercept = isNeedIntercept()
+                Log.d(TAG, " mIsNeedIntercept=$mIsNeedIntercept , mDeltaX=$mDeltaX , mDeltaY=$mDeltaY")
+                if (mIsNeedIntercept && !mIsBeingDragged) {
                     mIsBeingDragged = true
-                    initVelocityTrackerIfNotExists()
-                    mVelocityTracker.addMovement(ev)
-                    mNestedYOffset = 0
-                    parent?.requestDisallowInterceptTouchEvent(true)
 
-                    ev.action = MotionEvent.ACTION_CANCEL
-                    val obtain = MotionEvent.obtain(ev)
-                    obtain.action = MotionEvent.ACTION_DOWN
-                    dispatchTouchEvent(obtain)
-                    return dispatchTouchEvent(ev)
+//                    val obtain = MotionEvent.obtain(ev)
+//                    obtain.action = MotionEvent.ACTION_DOWN
+//                    dispatchTouchEvent(obtain)
                 }
             }
 
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
-                mIsBeingDragged = false
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_UP,ACTION_CANCEL")
+            }
+
+            MotionEvent.ACTION_POINTER_UP -> {
             }
 
             else -> {
@@ -329,12 +336,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
-        if (scrollY == 0 && !canScrollVertically(1)
-            && scrollX == 0 && !canScrollHorizontally(1)
-        ) {
-            mIsBeingDragged = false
-        }
-        return mIsBeingDragged && isEnabled
+        return mIsNeedIntercept && isEnabled
     }
 
     override fun performClick(): Boolean {
@@ -342,38 +344,44 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        val pointerIndex = event.actionIndex
+        if (pointerIndex < 0) {
+            recycleVelocityTracker()
+            return false
+        }
         initVelocityTrackerIfNotExists()
-        mActivePointerId = event.getPointerId(0)
+        if (mIsNeedIntercept) {
+            parent?.requestDisallowInterceptTouchEvent(true)
+        }
+        mActivePointerId = event.getPointerId(pointerIndex)
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
-                mLastX = event.x
-                mLastY = event.y
+                Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_DOWN")
+                mLastMotionX = event.getX(pointerIndex)
+                mLastMotionY = event.getY(pointerIndex)
 
+//                if (mIsBeingDragged) {//回调down事件为己用
+//                    initOrResetVelocityTracker()
+//                    mVelocityTracker.addMovement(event)
+//                }
+
+                initVelocityTracker()
+                mNestedXOffset = 0
                 mNestedYOffset = 0
-                event.offsetLocation(0f, mNestedYOffset.toFloat())
+                event.offsetLocation(mNestedXOffset.toFloat(), mNestedYOffset.toFloat())
 
                 mActivePointerId = event.getPointerId(0)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    startNestedScroll(View.SCROLL_AXIS_VERTICAL)
-                }
+                ViewCompat.startNestedScroll(this@MultiFlowIndicator, View.SCROLL_AXIS_VERTICAL)
             }
             MotionEvent.ACTION_MOVE -> {
-                val activePointerId = mActivePointerId
-                if (activePointerId == INVALID_POINTER) {
-                    // If we don't have a valid id, the touch down wasn't on content.
-                    return false
-                }
-
-                val pointerIndex = event.findPointerIndex(activePointerId)
-                if (pointerIndex == -1) {
-                    return false
-                }
+                mNestedXOffset = 0
+                mNestedYOffset = 0
 
                 val moveX = event.getX(pointerIndex)
                 val moveY = event.getY(pointerIndex)
 
-                var delX = (mLastX - moveX).toInt()
-                var delY = (mLastY - moveY).toInt()
+                var delX = (mLastMotionX - moveX).toInt()
+                var delY = (mLastMotionY - moveY).toInt()
 
 
                 if (dispatchNestedPreScroll(delX, delY, mScrollConsumed, mScrollOffset)) {
@@ -383,62 +391,63 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     )
                     delX -= mScrollConsumed[0]
                     delY -= mScrollConsumed[1]
-                    event.offsetLocation(0f, mScrollOffset[1].toFloat())
+                    event.offsetLocation(mScrollOffset[0].toFloat(), mScrollOffset[1].toFloat())
+                    mNestedXOffset += mScrollOffset[0]
                     mNestedYOffset += mScrollOffset[1]
                 }
-                mLastX = moveX - mScrollOffset[0]
-                mLastY = moveY - mScrollOffset[1]
 
+                val oldX = scrollX
                 val oldY = scrollY
-                if (overScrollBy(
-                        delX,
-                        delY,
-                        scrollX,
-                        scrollY,
-                        getScrollRangeX(),
-                        getScrollRangeY(),
-                        mOverscrollDistance,
-                        mOverscrollDistance,
-                        true
-                    ) && !hasNestedScrollingParent()
-                ) {
-                    // Break our velocity if we hit a scroll barrier.
-                    mVelocityTracker.clear()
-                }
+//                if (overScrollBy(
+//                        delX,
+//                        delY,
+//                        scrollX,
+//                        scrollY,
+//                        getScrollRangeX(),
+//                        getScrollRangeY(),
+//                        mOverscrollDistance,
+//                        mOverscrollDistance,
+//                        true
+//                    ) && !hasNestedScrollingParent()
+//                ) {
+//                    // Break our velocity if we hit a scroll barrier.
+//                    mVelocityTracker.clear()
+//                }
 
+                val scrolledDeltaX = scrollX - oldX
                 val scrolledDeltaY = scrollY - oldY
+                val unconsumedX = delX - scrolledDeltaX
                 val unconsumedY = delY - scrolledDeltaY
-                if (dispatchNestedScroll(0, scrolledDeltaY, 0, unconsumedY, mScrollOffset)) run {
-                    mLastX -= mScrollOffset[0]
-                    mLastY -= mScrollOffset[1]
+                if (dispatchNestedScroll(scrolledDeltaX, scrolledDeltaY, unconsumedX, unconsumedY, mScrollOffset)) run {
+                    mLastMotionX -= mScrollOffset[0]
+                    mLastMotionY -= mScrollOffset[1]
                     Log.d(
                         TAG,
                         "dispatchNestedScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}"
                     )
                     event.offsetLocation(0f, mScrollOffset[1].toFloat())
+                    mNestedXOffset += mScrollOffset[0]
                     mNestedYOffset += mScrollOffset[1]
                 } else {
                     when {
-                        Math.abs(delX) > Math.abs(delY)
-                                && (canScrollHorizontally(-1)
-                                || canScrollHorizontally(1)) -> {
+                        getScrollRangeX() > 0 -> {
                             val dx = when {
                                 scrollX + delX < 0 -> -scrollX
                                 scrollX + delX > getScrollRangeX() -> getScrollRangeX() - scrollX
                                 else -> delX
                             }
-                            mOverScroller.startScroll(
-                                scrollX,
-                                0,
-                                dx,
-                                0
-                            )
-                            ViewCompat.postInvalidateOnAnimation(this)
+
+                            scrollBy(dx, 0)
+//                            mOverScroller.startScroll(
+//                                scrollX,
+//                                0,
+//                                dx,
+//                                0
+//                            )
+//                            ViewCompat.postInvalidateOnAnimation(this)
                         }
 
-                        Math.abs(delY) > Math.abs(delX)
-                                && (canScrollVertically(-1)
-                                || canScrollVertically(1)) -> {
+                        getScrollRangeY() > 0 -> {
 
                             val dy = when {
                                 scrollY + delY < 0 -> -scrollY
@@ -446,35 +455,37 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                                 else -> delY
                             }
 
-                            mOverScroller.startScroll(
-                                0,
-                                scrollY,
-                                0,
-                                dy
-                            )
+                            scrollBy(0, dy)
 
-                            ViewCompat.postInvalidateOnAnimation(this)
+//                            mOverScroller.startScroll(
+//                                0,
+//                                scrollY,
+//                                0,
+//                                dy
+//                            )
+//
+//                            ViewCompat.postInvalidateOnAnimation(this)
                         }
                         else -> {
                         }
                     }
                 }
 
-                mLastX = moveX
-                mLastY = moveY
-            }
-            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
-                Log.d("MultiFlowIndicator", "MotionEvent.ACTION_UP or MotionEvent.ACTION_CANCEL")
-                mLastX = 0f
-                mLastY = 0f
+                Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_MOVE ,delX=$delX , delY = $delY")
 
+                mLastMotionX = moveX - mScrollOffset[0]
+                mLastMotionY = moveY - mScrollOffset[1]
+            }
+            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
+                Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_UP,ACTION_CANCEL")
+                initVelocityTrackerIfNotExists()
                 val velocityTracker = mVelocityTracker
                 velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity.toFloat())
                 val velocityX = -velocityTracker.getXVelocity(mActivePointerId).toInt()
                 val velocityY = -velocityTracker.getYVelocity(mActivePointerId).toInt()
 
                 when {
-                    Math.abs(velocityX) > Math.abs(velocityY) && Math.abs(velocityX) > mMinimumVelocity -> {
+                    getScrollRangeX() > 0 && Math.abs(velocityX) > mMinimumVelocity -> {
                         val canFling = (scrollX > 0 || velocityX > 0) && (scrollX < getScrollRangeX()
                                 || velocityX < 0)
                         if (!dispatchNestedPreFling(velocityX.toFloat(), 0f)) {
@@ -488,7 +499,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                             }
                         }
                     }
-                    Math.abs(velocityX) < Math.abs(velocityY) && Math.abs(velocityY) > mMinimumVelocity -> {
+                    getScrollRangeY() > 0 && Math.abs(velocityY) > mMinimumVelocity -> {
                         val canFling = (scrollY > 0 || velocityY > 0) && (scrollY < getScrollRangeY() || velocityY < 0)
                         if (!dispatchNestedPreFling(0f, velocityY.toFloat())) {
                             dispatchNestedFling(0f, velocityY.toFloat(), canFling)
@@ -501,11 +512,25 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                             }
                         }
                     }
-                    else -> {
+                    mOverScroller.springBack(
+                        this.scrollX,
+                        this.scrollY,
+                        0,
+                        getScrollRangeX(),
+                        0,
+                        getScrollRangeY()
+                    ) -> {
+                        ViewCompat.postInvalidateOnAnimation(this)
                     }
                 }
                 recycleVelocityTracker()
                 stopNestedScroll()
+                mLastMotionX = 0f
+                mLastMotionY = 0f
+                mNestedXOffset = 0
+                mNestedYOffset = 0
+                mIsBeingDragged = false
+                mActivePointerId = INVALID_POINTER
             }
             else -> {
             }
@@ -528,9 +553,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             MotionEvent.ACTION_DOWN -> {
                 mLastX = event.getX(pointerIndex)
                 mLastY = event.getY(pointerIndex)
-                mDeltaX = 0f
-                mDeltaY = 0f
-                mActivePointerId = event.getPointerId(0)
+                mLastMotionX = event.getX(pointerIndex)
+                mLastMotionY = event.getY(pointerIndex)
+                mActivePointerId = event.getPointerId(pointerIndex)
             }
 
             MotionEvent.ACTION_POINTER_DOWN -> {
@@ -538,13 +563,17 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 if (pointerId != mActivePointerId) {
                     mLastX = event.getX(pointerIndex)
                     mLastY = event.getY(pointerIndex)
-                    mDeltaX = 0f
-                    mDeltaY = 0f
+                    mLastMotionX = event.getX(pointerIndex)
+                    mLastMotionY = event.getY(pointerIndex)
                     mActivePointerId = event.getPointerId(pointerIndex)
                 }
             }
 
             MotionEvent.ACTION_MOVE -> {
+                if (mActivePointerId == INVALID_POINTER) {
+                    // If we don't have a valid id, the touch down wasn't on content.
+                    return
+                }
                 val pointerIndex1 = event.findPointerIndex(mActivePointerId)
                 val moveX = event.getX(pointerIndex1)
                 val moveY = event.getY(pointerIndex1)
@@ -576,6 +605,31 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             }
         }
     }
+
+    private fun isNeedIntercept(): Boolean = when {
+        getScrollRangeX() > 0 -> {
+            val isOnLeft = !canScrollHorizontally(-1)
+            val isOnRight = !canScrollHorizontally(1)
+            when {
+                mDeltaX > 0 && isOnLeft -> false
+                mDeltaX < 0 && isOnRight -> false
+                else -> true
+            }
+        }
+
+        getScrollRangeY() > 0 -> {
+            val isOnTop = !canScrollVertically(-1)
+            val isOnBottom = !canScrollVertically(1)
+
+            when {
+                mDeltaY > 0 && isOnTop -> false
+                mDeltaY < 0 && isOnBottom -> false
+                else -> true
+            }
+        }
+        else -> false
+    }
+
 
     override fun computeScroll() {
         if (mOverScroller.computeScrollOffset()) {
@@ -750,6 +804,12 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
     fun couldExtpand() = getScrollRangeX() > 0 || mMode == MODE.VERTICAL
 
+    private fun initVelocityTracker() {
+        if (!this::mVelocityTracker.isInitialized) {
+            mVelocityTracker = VelocityTracker.obtain()
+        }
+    }
+
     private fun initOrResetVelocityTracker() {
         if (!this::mVelocityTracker.isInitialized) {
             mVelocityTracker = VelocityTracker.obtain()
@@ -768,17 +828,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
         if (!this::mVelocityTracker.isInitialized) {
             mVelocityTracker.recycle()
         }
-    }
-
-    private fun inChild(x: Int, y: Int): Boolean {
-        if (childCount > 0) {
-            val child = getChildAt(0)
-            return !(y < child.top - scrollY
-                    || y >= child.bottom - scrollY
-                    || x < child.left - scrollX
-                    || x >= child.right - scrollX)
-        }
-        return false
     }
 
     private fun calcIndicatorRect() {

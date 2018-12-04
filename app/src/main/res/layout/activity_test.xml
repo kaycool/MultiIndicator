@@ -1,22 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<android.support.design.widget.CoordinatorLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    <!--app:multi_indicator_style="rectangle"-->
-    <com.kai.wang.space.indicator.lib.MultiFlowIndicator
-            android:id="@+id/spaceFlowIndicator"
-            app:multi_indicator_radius="10dp"
-            app:multi_max_lines="4"
-            app:multi_indicator_style="rectangle"
+    <android.support.design.widget.AppBarLayout
+            android:id="@+id/appBarLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content">
+
+        <android.support.design.widget.CollapsingToolbarLayout
+                android:id="@+id/collToolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed">
+
+            <View
+                    android:background="@android:color/black"
+                    app:layout_collapseMode="parallax"
+                    app:layout_collapseParallaxMultiplier="0"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"/>
+
+            <android.support.v7.widget.Toolbar
+                    android:background="@color/colorAccent"
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:contentInsetStart="0dp"
+                    app:layout_collapseMode="pin"/>
+
+        </android.support.design.widget.CollapsingToolbarLayout>
+
+        <!--app:multi_indicator_style="rectangle"-->
+        <com.kai.wang.space.indicator.lib.MultiFlowIndicator
+                android:id="@+id/spaceFlowIndicator"
+                app:multi_indicator_radius="10dp"
+                app:multi_max_lines="4"
+                app:multi_indicator_style="rectangle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+    </android.support.design.widget.AppBarLayout>
 
     <android.support.v4.view.ViewPager
-            android:layout_below="@+id/spaceFlowIndicator"
             android:id="@+id/viewPager"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             android:layout_above="@+id/btnMode"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
@@ -24,10 +54,9 @@
     <Button
             android:id="@+id/btnMode"
             android:text="切换"
-            android:layout_alignParentBottom="true"
-            android:layout_centerInParent="true"
+            android:layout_gravity="bottom|center"
             android:layout_width="120dp"
             android:layout_marginBottom="20dp"
             android:layout_height="40dp"/>
 
-</RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>
