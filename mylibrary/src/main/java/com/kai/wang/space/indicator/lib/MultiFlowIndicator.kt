@@ -478,7 +478,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                         }
                     }
                 }
-
                 Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_MOVE ,delX=$delX , delY = $delY")
 
                 mLastMotionX = moveX - mScrollOffset[0]
@@ -1081,8 +1080,10 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
         textUnSelectSize: Float = mTextUnSelectedSize
     ) {
         this.mTextSelectedColor = textSelectColor
+        this.mIconSelectedColor = iconSelectColor
         this.mTextSelectedSize = textSelectSize
         this.mTextUnSelectedColor = textUnSelectColor
+        this.mIconUnSelectedColor = iconUnSelectColor
         this.mTextUnSelectedSize = textUnSelectSize
 
         for (index in 0 until childCount) {
