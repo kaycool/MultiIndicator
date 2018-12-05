@@ -125,6 +125,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     constructor(context: Context?, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         setWillNotDraw(false)
+        isNestedScrollingEnabled = true
         val configuration = ViewConfiguration.get(context)
         mTouchSlop = configuration.scaledTouchSlop
         mMinimumVelocity = configuration.scaledMinimumFlingVelocity
@@ -295,7 +296,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
         dealMultiTouchEvent(ev)
         when (ev.action) {
             MotionEvent.ACTION_DOWN -> {
-                Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_DOWN")
                 when {
                     getScrollRangeX() > 0 -> {
                         val isOnLeft = !canScrollHorizontally(-1)
@@ -316,7 +316,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 }
             }
             MotionEvent.ACTION_MOVE -> {
-                Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_MOVE")
                 mIsNeedIntercept = isNeedIntercept()
                 Log.d(TAG, " mIsNeedIntercept=$mIsNeedIntercept , mDeltaX=$mDeltaX , mDeltaY=$mDeltaY")
                 if (mIsNeedIntercept && !mIsBeingDragged) {
@@ -374,7 +373,10 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 event.offsetLocation(mNestedXOffset.toFloat(), mNestedYOffset.toFloat())
 
                 mActivePointerId = event.getPointerId(0)
-                ViewCompat.startNestedScroll(this@MultiFlowIndicator, View.SCROLL_AXIS_VERTICAL)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    startNestedScroll(View.SCROLL_AXIS_VERTICAL)
+                }
             }
             MotionEvent.ACTION_MOVE -> {
                 parent?.requestDisallowInterceptTouchEvent(true)
@@ -535,6 +537,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 mLastMotionX = event.getX(pointerIndex)
                 mLastMotionY = event.getY(pointerIndex)
                 mActivePointerId = event.getPointerId(0)
+
+                Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_DOWN,mLastX=$mLastX,mLastY=$mLastY")
             }
 
             MotionEvent.ACTION_POINTER_DOWN -> {
@@ -556,6 +560,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 mDeltaY = moveY - mLastY
                 mLastX = moveX
                 mLastY = moveY
+
+                Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_MOVE,moveX=$moveX,moveY=$moveY")
             }
 
             MotionEvent.ACTION_POINTER_UP -> {
@@ -1096,6 +1102,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
     override fun notifyChanged() {
         changeAdapter()
+        changedAdapterUi()
     }
 
     override fun insert(positionStart: Int, count: Int) {
