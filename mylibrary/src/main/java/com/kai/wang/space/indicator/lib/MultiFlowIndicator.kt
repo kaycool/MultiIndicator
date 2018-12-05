@@ -68,7 +68,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     private var mIndicatorStyle = STYLE_NORMAL
     private var mIndicatorStyleRadius = 0f
     private var mMaxHeight = -1f
-    private var mMaxLines = -1
+    private var mMaxLines = -1f
     private var mIndicatorColor = Color.RED
     private val mPaint by lazy {
         Paint().apply {
@@ -185,7 +185,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                         mMeasureWidth = childSpaceWidth
                         measureHeight += lineHeight + childSpaceHeight
                         if (lines < mMaxLines) {
-                            mLinesMaxHeight += lineHeight
+                            mLinesMaxHeight += if (mMaxLines - lines < 1) {
+                                (lineHeight * (mMaxLines - lines)).toInt()
+                            } else {
+                                lineHeight
+                            }
                         }
                         lineHeight = 0
                         lines++
@@ -739,7 +743,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 0f
             )
             mMaxHeight = a.getDimension(R.styleable.MultiIndicator_multi_max_height, -1f)
-            mMaxLines = a.getInt(R.styleable.MultiIndicator_multi_max_lines, -1)
+            mMaxLines = a.getFloat(R.styleable.MultiIndicator_multi_max_lines, -1f)
             mIndicatorColor =
                     a.getColor(R.styleable.MultiIndicator_multi_indicator_color, Color.GRAY)
 

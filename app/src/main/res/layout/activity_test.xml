@@ -37,7 +37,7 @@
         <com.kai.wang.space.indicator.lib.MultiFlowIndicator
                 android:id="@+id/spaceFlowIndicator"
                 app:multi_indicator_radius="10dp"
-                app:multi_max_lines="4"
+                app:multi_max_lines="5.5"
                 app:multi_indicator_style="rectangle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>

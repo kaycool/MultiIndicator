@@ -20,7 +20,7 @@
             <enum name="rectangle" value="1"/>
         </attr>
         <attr name="multi_max_height" format="dimension"/>
-        <attr name="multi_max_lines" format="integer"/>
+        <attr name="multi_max_lines" format="float"/>
 
     </declare-styleable>
 
