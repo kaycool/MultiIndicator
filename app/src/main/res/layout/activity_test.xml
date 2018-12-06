@@ -41,18 +41,26 @@
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-        <!--app:multi_indicator_style="rectangle"-->
-        <com.kai.wang.space.indicator.lib.MultiFlowIndicator
-                android:id="@+id/spaceFlowIndicator"
-                app:multi_indicator_radius="10dp"
-                app:multi_max_lines="5.5"
-                app:multi_indicator_style="rectangle"
+
+        <RelativeLayout
+                android:id="@+id/top"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content">
+
+            <!--app:multi_indicator_style="rectangle"-->
+            <com.kai.wang.space.indicator.lib.MultiFlowIndicator
+                    android:id="@+id/spaceFlowIndicator"
+                    app:multi_indicator_radius="10dp"
+                    app:multi_max_lines="5.5"
+                    app:multi_indicator_style="rectangle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+        </RelativeLayout>
 
         <android.support.v4.view.ViewPager
                 android:id="@+id/viewPager"
-                android:layout_below="@+id/spaceFlowIndicator"
+                android:layout_below="@+id/top"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
 

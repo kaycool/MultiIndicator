@@ -381,7 +381,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 this.startNestedScroll(2, 0)
             }
             MotionEvent.ACTION_MOVE -> {
-                parent?.requestDisallowInterceptTouchEvent(true)
                 mNestedXOffset = 0
                 mNestedYOffset = 0
 
@@ -404,6 +403,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 }
 
                 if (Math.abs(delX) > mTouchSlop || Math.abs(delY) > mTouchSlop) {
+                    parent?.requestDisallowInterceptTouchEvent(true)
                     val oldX = scrollX
                     val oldY = scrollY
 
@@ -1278,12 +1278,19 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                             dx > getScrollRangeX() -> getScrollRangeX() - scrollX
                             else -> dx - scrollX
                         }
-                        mOverScroller.startScroll(
+
+                        overScrollByCompat(
+                            dx,
+                            0,
                             scrollX,
                             scrollY,
-                            dx,
-                            0
+                            getScrollRangeX(),
+                            getScrollRangeY(),
+                            0,
+                            0,
+                            false
                         )
+
                     }
                 }
                 MultiFlowIndicator.MODE.VERTICAL -> {
@@ -1296,11 +1303,16 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                             dy > getScrollRangeY() -> getScrollRangeY() - scrollY
                             else -> dy - scrollY
                         }
-                        mOverScroller.startScroll(
+                        overScrollByCompat(
+                            0,
+                            dy,
                             scrollX,
                             scrollY,
+                            getScrollRangeX(),
+                            getScrollRangeY(),
                             0,
-                            dy
+                            0,
+                            false
                         )
                     }
                 }
