@@ -90,6 +90,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
     private val mScrollConsumed = IntArray(2)
     private var mNestedXOffset: Int = 0
     private var mNestedYOffset: Int = 0
+    private var mLastScrollerX: Int = 0
+    private var mLastScrollerY: Int = 0
     private var mLastX = 0f
     private var mLastY = 0f
     private var mLastMotionX = 0f
@@ -715,15 +717,52 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
             val x = mOverScroller.currX
             val y = mOverScroller.currY
 
-            if (oldX != x || oldY != y) {
-                overScrollBy(
-                    x - oldX, y - oldY, oldX, oldY, getScrollRangeX(), getScrollRangeY(),
-                    mOverflingDistance, mOverflingDistance, false
-                )
+            var dy = y - this.mLastScrollerY
+            if (this.dispatchNestedPreScroll(0, dy, this.mScrollConsumed, null as IntArray?, 1)) {
+                dy -= this.mScrollConsumed[1]
             }
 
-            scrollTo(mOverScroller.currX, mOverScroller.currY)
+
+            if (dy != 0) {
+                val range = this.getScrollRangeY()
+                val oldScrollY = this.scrollY
+                this.overScrollByCompat(0, dy, this.scrollX, oldScrollY, 0, range, 0, 0, false)
+                val scrolledDeltaY = this.scrollY - oldScrollY
+                val unconsumedY = dy - scrolledDeltaY
+                if (!this.dispatchNestedScroll(0, scrolledDeltaY, 0, unconsumedY, null as IntArray?, 1)) {
+                    val mode = this.overScrollMode
+                    val canOverscroll = mode == 0 || mode == 1 && range > 0
+//                    if (canOverscroll) {
+//                        this.ensureGlows()
+//                        if (y <= 0 && oldScrollY > 0) {
+//                            this.mEdgeGlowTop.onAbsorb(this.mScroller.getCurrVelocity().toInt())
+//                        } else if (y >= range && oldScrollY < range) {
+//                            this.mEdgeGlowBottom.onAbsorb(this.mScroller.getCurrVelocity().toInt())
+//                        }
+//                    }
+                }
+            }
+
+            this.mLastScrollerX = x
+            this.mLastScrollerY = y
+
+
+//            if (oldX != x || oldY != y) {
+//                overScrollBy(
+//                    x - oldX, y - oldY, oldX, oldY, getScrollRangeX(), getScrollRangeY(),
+//                    mOverflingDistance, mOverflingDistance, false
+//                )
+//            }
+//
+//            scrollTo(mOverScroller.currX, mOverScroller.currY)
             ViewCompat.postInvalidateOnAnimation(this)
+        } else {
+            if (this.hasNestedScrollingParent(1)) {
+                this.stopNestedScroll(1)
+            }
+
+            this.mLastScrollerX = 0
+            this.mLastScrollerY = 0
         }
     }
 
@@ -1491,6 +1530,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 scrollX, scrollY, velocityX, velocityY, 0, Math.max(0, getScrollRangeX()), 0,
                 Math.max(0, getScrollRangeY()), measuredHeight / 3, measuredHeight / 3
             )
+            this.mLastScrollerX = this.scrollX
+            this.mLastScrollerY = this.scrollY
             ViewCompat.postInvalidateOnAnimation(this)
         }
     }
