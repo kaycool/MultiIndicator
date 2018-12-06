@@ -295,6 +295,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
             }
             MotionEvent.ACTION_MOVE -> {
                 if (Math.abs(mDeltaX) > mTouchSlop || Math.abs(mDeltaY) > mTouchSlop) {
+                    parent?.requestDisallowInterceptTouchEvent(true)
                     mIsNeedIntercept = true
                 }
             }
