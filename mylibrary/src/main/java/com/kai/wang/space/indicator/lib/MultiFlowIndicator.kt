@@ -401,77 +401,64 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                     mNestedYOffset += mScrollOffset[1]
                 }
 
-                val oldX = scrollX
-                val oldY = scrollY
+                if (Math.abs(delX) > mTouchSlop || Math.abs(delY) > mTouchSlop) {
+                    val oldX = scrollX
+                    val oldY = scrollY
 
-                val overscrollMode = this.overScrollMode
-                val canOverscroll = overscrollMode == 0 || overscrollMode == 1 && getScrollRangeY() > 0
-                if (this.overScrollByCompat(
-                        delX,
-                        delY,
-                        scrollX,
-                        scrollY,
-                        mMeasureWidth,
-                        mMeasureHeight,
-                        0,
-                        0,
-                        true
-                    ) && !this.hasNestedScrollingParent(0)
-                ) {
-                    this.mVelocityTracker.clear()
-                }
-
-                val scrolledDeltaX = scrollX - oldX
-                val scrolledDeltaY = scrollY - oldY
-                val unconsumedX = delX - scrolledDeltaX
-                val unconsumedY = delY - scrolledDeltaY
-                if (dispatchNestedScroll(
-                        scrolledDeltaX,
-                        scrolledDeltaY,
-                        unconsumedX,
-                        unconsumedY,
-                        mScrollOffset
-                    )
-                ) {
-                    mLastMotionX -= mScrollOffset[0]
-                    mLastMotionY -= mScrollOffset[1]
-                    Log.d(
-                        TAG,
-                        "dispatchNestedScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}"
-                    )
-                    event.offsetLocation(0f, mScrollOffset[1].toFloat())
-                    mNestedXOffset += mScrollOffset[0]
-                    mNestedYOffset += mScrollOffset[1]
-                } else if (canOverscroll) {
-                    when {
-                        getScrollRangeX() > 0 -> {
-                            val dx = when {
-                                scrollX + delX < 0 -> -scrollX
-                                scrollX + delX > getScrollRangeX() -> getScrollRangeX() - scrollX
-                                else -> delX
-                            }
-
-                            scrollBy(dx, 0)
-                        }
-
-                        getScrollRangeY() > 0 -> {
-
-                            val dy = when {
-                                scrollY + delY < 0 -> -scrollY
-                                scrollY + delY > getScrollRangeY() -> getScrollRangeY() - scrollY
-                                else -> delY
-                            }
-
-                            scrollBy(0, dy)
-                        }
-                        else -> {
-                        }
+                    if (Math.abs(delX) < mTouchSlop) {
+                        delX = 0
                     }
-                }
-                Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_MOVE ,delX=$delX , delY = $delY")
 
-                mLastMotionX = moveX - mScrollOffset[0]
-                mLastMotionY = moveY - mScrollOffset[1]
+                    if (Math.abs(delY) < mTouchSlop) {
+                        delY = 0
+                    }
+
+                    val overscrollMode = this.overScrollMode
+                    val canOverscroll = overscrollMode == 0 || overscrollMode == 1 && getScrollRangeY() > 0
+                    if (this.overScrollByCompat(
+                            delX,
+                            delY,
+                            scrollX,
+                            scrollY,
+                            mMeasureWidth,
+                            mMeasureHeight,
+                            0,
+                            0,
+                            true
+                        ) && !this.hasNestedScrollingParent(0)
+                    ) {
+                        this.mVelocityTracker.clear()
+                    }
+
+                    val scrolledDeltaX = scrollX - oldX
+                    val scrolledDeltaY = scrollY - oldY
+                    val unconsumedX = delX - scrolledDeltaX
+                    val unconsumedY = delY - scrolledDeltaY
+                    if (dispatchNestedScroll(
+                            scrolledDeltaX,
+                            scrolledDeltaY,
+                            unconsumedX,
+                            unconsumedY,
+                            mScrollOffset
+                        )
+                    ) {
+                        mLastMotionX -= mScrollOffset[0]
+                        mLastMotionY -= mScrollOffset[1]
+                        Log.d(
+                            TAG,
+                            "dispatchNestedScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}"
+                        )
+                        event.offsetLocation(0f, mScrollOffset[1].toFloat())
+                        mNestedXOffset += mScrollOffset[0]
+                        mNestedYOffset += mScrollOffset[1]
+                    } else if (canOverscroll) {
+
+                    }
+                    Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_MOVE ,delX=$delX , delY = $delY")
+
+                    mLastMotionX = moveX - mScrollOffset[0]
+                    mLastMotionY = moveY - mScrollOffset[1]
+                }
 
             }
             MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
@@ -551,7 +538,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
         return true
     }
 
-    internal fun overScrollByCompat(
+    private fun overScrollByCompat(
         deltaX: Int,
         deltaY: Int,
         scrollX: Int,
@@ -712,26 +699,45 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
         if (mOverScroller.computeScrollOffset()) {
 //            Log.d("MultiFlowIndicator", "computeScroll")
 
-            val oldX = scrollX
-            val oldY = scrollY
             val x = mOverScroller.currX
             val y = mOverScroller.currY
 
+            var dx = x - this.mLastScrollerX
             var dy = y - this.mLastScrollerY
-            if (this.dispatchNestedPreScroll(0, dy, this.mScrollConsumed, null as IntArray?, 1)) {
+            if (this.dispatchNestedPreScroll(dx, dy, this.mScrollConsumed, null as IntArray?, 1)) {
+                dx -= this.mScrollConsumed[0]
                 dy -= this.mScrollConsumed[1]
             }
 
-
-            if (dy != 0) {
-                val range = this.getScrollRangeY()
+            if (dx != 0 || dy != 0) {
+                val oldScrollX = this.scrollX
                 val oldScrollY = this.scrollY
-                this.overScrollByCompat(0, dy, this.scrollX, oldScrollY, 0, range, 0, 0, false)
+                this.overScrollByCompat(
+                    dx,
+                    dy,
+                    oldScrollX,
+                    oldScrollY,
+                    getScrollRangeX(),
+                    getScrollRangeY(),
+                    0,
+                    0,
+                    false
+                )
+                val scrolledDeltaX = this.scrollX - oldScrollX
                 val scrolledDeltaY = this.scrollY - oldScrollY
+                val unconsumedX = dx - scrolledDeltaY
                 val unconsumedY = dy - scrolledDeltaY
-                if (!this.dispatchNestedScroll(0, scrolledDeltaY, 0, unconsumedY, null as IntArray?, 1)) {
+                if (!this.dispatchNestedScroll(
+                        scrolledDeltaX,
+                        scrolledDeltaY,
+                        unconsumedX,
+                        unconsumedY,
+                        null as IntArray?,
+                        1
+                    )
+                ) {
                     val mode = this.overScrollMode
-                    val canOverscroll = mode == 0 || mode == 1 && range > 0
+                    val canOverscroll = mode == 0 || mode == 1 && getScrollRangeY() > 0
 //                    if (canOverscroll) {
 //                        this.ensureGlows()
 //                        if (y <= 0 && oldScrollY > 0) {
@@ -1528,7 +1534,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
             )
             mOverScroller.fling(
                 scrollX, scrollY, velocityX, velocityY, 0, Math.max(0, getScrollRangeX()), 0,
-                Math.max(0, getScrollRangeY()), measuredHeight / 3, measuredHeight / 3
+                Math.max(0, getScrollRangeY()), 0, 0
             )
             this.mLastScrollerX = this.scrollX
             this.mLastScrollerY = this.scrollY
