@@ -377,8 +377,8 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                             delY,
                             scrollX,
                             scrollY,
-                            mMeasureWidth,
-                            mMeasureHeight,
+                            getScrollRangeX(),
+                            getScrollRangeY(),
                             0,
                             0,
                             true) && !this.hasNestedScrollingParent(0)) {
@@ -479,6 +479,10 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
             clampedX = true
         }
 
+        if (clampedX && !this.hasNestedScrollingParent(1)) {
+            this.mOverScroller.springBack(newScrollX, newScrollY, 0, this.getScrollRangeX(), 0, this.getScrollRangeY())
+        }
+
         var clampedY = false
         if (newScrollY > bottom) {
             newScrollY = bottom
@@ -489,7 +493,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
         }
 
         if (clampedY && !this.hasNestedScrollingParent(1)) {
-            this.mOverScroller.springBack(newScrollX, newScrollY, 0, getScrollRangeX(), 0, this.getScrollRangeY())
+            this.mOverScroller.springBack(newScrollX, newScrollY, 0, this.getScrollRangeX(), 0, this.getScrollRangeY())
         }
 
         this.onOverScrolled(newScrollX, newScrollY, clampedX, clampedY)
