@@ -153,7 +153,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     measureChild(
                         childView,
                         MeasureSpec.makeMeasureSpec(parentWidth - mPaddingHorizontal * 2, MeasureSpec.UNSPECIFIED),
-                        MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(heightMeasureSpec), MeasureSpec.AT_MOST)
+                        heightMeasureSpec
                     )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
                     mMeasureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
@@ -174,7 +174,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     measureChild(
                         childView,
                         MeasureSpec.makeMeasureSpec(parentWidth - mPaddingHorizontal * 2, MeasureSpec.AT_MOST),
-                        MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(heightMeasureSpec), MeasureSpec.AT_MOST)
+                        heightMeasureSpec
                     )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
                     val childSpaceWidth =
