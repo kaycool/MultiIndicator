@@ -294,6 +294,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
             MotionEvent.ACTION_DOWN -> {
                 this.mOverScroller.computeScrollOffset()
                 this.mIsNeedIntercept = !this.mOverScroller.isFinished
+                this.startNestedScroll(2, 0)
             }
             MotionEvent.ACTION_MOVE -> {
                 if (Math.abs(mDeltaX) > mTouchSlop || Math.abs(mDeltaY) > mTouchSlop) {
@@ -305,6 +306,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_UP,ACTION_CANCEL")
                 mIsNeedIntercept = false
+                this.stopNestedScroll(0)
             }
 
             MotionEvent.ACTION_POINTER_UP -> {
