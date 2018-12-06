@@ -10,6 +10,7 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.support.design.widget.CoordinatorLayout
 import android.support.v4.view.*
 import android.support.v4.widget.ViewDragHelper.INVALID_POINTER
 import android.util.AttributeSet
@@ -315,15 +316,17 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 }
             }
             MotionEvent.ACTION_MOVE -> {
-                mIsNeedIntercept = isNeedIntercept()
-                Log.d(TAG, " mIsNeedIntercept=$mIsNeedIntercept , mDeltaX=$mDeltaX , mDeltaY=$mDeltaY")
-                if (mIsNeedIntercept && !mIsBeingDragged) {
-                    mIsBeingDragged = true
+//                mIsNeedIntercept = isNeedIntercept()
+//                Log.d(TAG, " mIsNeedIntercept=$mIsNeedIntercept , mDeltaX=$mDeltaX , mDeltaY=$mDeltaY")
+//                if (mIsNeedIntercept && !mIsBeingDragged) {
+//                    mIsBeingDragged = true
 
 //                    val obtain = MotionEvent.obtain(ev)
 //                    obtain.action = MotionEvent.ACTION_DOWN
 //                    dispatchTouchEvent(obtain)
-                }
+//                }
+
+                mIsNeedIntercept = true
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -341,15 +344,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
-
-        when(ev.action){
-            MotionEvent.ACTION_DOWN->{}
-            MotionEvent.ACTION_MOVE->{}
-            MotionEvent.ACTION_DOWN->{}
-        }
-
-
-        return mIsNeedIntercept && isEnabled
+        return isEnabled
     }
 
     override fun performClick(): Boolean {
