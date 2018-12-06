@@ -132,7 +132,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
         mMaximumVelocity = configuration.scaledMaximumFlingVelocity
         mOverscrollDistance = configuration.scaledOverscrollDistance
         mOverflingDistance = configuration.scaledOverflingDistance
-//        mVerticalScrollFactor = configuration.scaledVerticalScrollFactor
 
         obtainAttributes(attrs)
     }
@@ -153,7 +152,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     measureChild(
                         childView,
                         MeasureSpec.makeMeasureSpec(parentWidth - mPaddingHorizontal * 2, MeasureSpec.UNSPECIFIED),
-                        MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(heightMeasureSpec),MeasureSpec.AT_MOST)
+                        MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(heightMeasureSpec), MeasureSpec.AT_MOST)
                     )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
                     mMeasureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
@@ -174,7 +173,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     measureChild(
                         childView,
                         MeasureSpec.makeMeasureSpec(parentWidth - mPaddingHorizontal * 2, MeasureSpec.AT_MOST),
-                        MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(heightMeasureSpec),MeasureSpec.AT_MOST)
+                        MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(heightMeasureSpec), MeasureSpec.AT_MOST)
                     )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
                     val childSpaceWidth =
@@ -342,6 +341,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+
+        when(ev.action){
+            MotionEvent.ACTION_DOWN->{}
+            MotionEvent.ACTION_MOVE->{}
+            MotionEvent.ACTION_DOWN->{}
+        }
+
+
         return mIsNeedIntercept && isEnabled
     }
 
@@ -374,9 +381,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
                 mActivePointerId = event.getPointerId(0)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    startNestedScroll(View.SCROLL_AXIS_VERTICAL)
-                }
+                this.startNestedScroll(2, 0)
             }
             MotionEvent.ACTION_MOVE -> {
                 parent?.requestDisallowInterceptTouchEvent(true)

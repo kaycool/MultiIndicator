@@ -33,6 +33,14 @@
 
         </android.support.design.widget.CollapsingToolbarLayout>
 
+
+    </android.support.design.widget.AppBarLayout>
+
+    <RelativeLayout
+            android:layout_above="@+id/btnMode"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
         <!--app:multi_indicator_style="rectangle"-->
         <com.kai.wang.space.indicator.lib.MultiFlowIndicator
                 android:id="@+id/spaceFlowIndicator"
@@ -42,14 +50,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
-    </android.support.design.widget.AppBarLayout>
+        <android.support.v4.view.ViewPager
+                android:id="@+id/viewPager"
+                android:layout_below="@+id/spaceFlowIndicator"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
 
-    <android.support.v4.view.ViewPager
-            android:id="@+id/viewPager"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"
-            android:layout_above="@+id/btnMode"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+    </RelativeLayout>
+
 
     <Button
             android:id="@+id/btnMode"
