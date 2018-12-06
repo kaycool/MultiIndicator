@@ -7,10 +7,8 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
-import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
-import android.support.design.widget.CoordinatorLayout
 import android.support.v4.view.*
 import android.support.v4.widget.ViewDragHelper.INVALID_POINTER
 import android.util.AttributeSet
@@ -23,8 +21,7 @@ import android.widget.OverScroller
  * @author kai.w
  * @des  $des
  */
-class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChild2, OnDataChangedListener {
-
+class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChild2, OnDataChangedListener {
     private lateinit var mViewPager: ViewPager
     private var mMultiFlowAdapter: MultiFlowAdapter<Any>? = null
 
@@ -51,6 +48,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
             }
         }
     private var mMeasureWidth = 0
+    private var mMeasureHeight = 0
 
     /** 用于绘制显示器  */
     private var mPaddingHorizontal = 0
@@ -142,7 +140,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
         val parentWidth = MeasureSpec.getSize(widthMeasureSpec)
 
         mMeasureWidth = 0
-        var measureHeight = 0
+        mMeasureHeight = 0
         var lineHeight = 0
         var lines = 0
         var mLinesMaxHeight = 0
@@ -157,14 +155,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     )
                     val layoutParams = childView.layoutParams as MarginLayoutParams
                     mMeasureWidth += childView.measuredWidth + layoutParams.leftMargin + layoutParams.rightMargin + mPaddingHorizontal
-                    if (measureHeight < childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin) {
-                        measureHeight = childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin +
+                    if (mMeasureHeight < childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin) {
+                        mMeasureHeight = childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin +
                                 mPaddingVertical
                     }
 
                     if (i == childCount - 1) {
                         mMeasureWidth += mPaddingHorizontal
-                        measureHeight += mPaddingVertical
+                        mMeasureHeight += mPaddingVertical
                     }
                 }
             }
@@ -184,7 +182,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     mMeasureWidth += childSpaceWidth
                     if (mMeasureWidth + paddingRight + paddingLeft > parentWidth) {
                         mMeasureWidth = childSpaceWidth
-                        measureHeight += lineHeight + childSpaceHeight
+                        mMeasureHeight += lineHeight + childSpaceHeight
                         if (lines < mMaxLines) {
                             mLinesMaxHeight += if (mMaxLines - lines < 1) {
                                 (lineHeight * (mMaxLines - lines)).toInt()
@@ -201,7 +199,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                         if (lines < mMaxLines) {
                             mLinesMaxHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
                         }
-                        measureHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
+                        mMeasureHeight += Math.max(lineHeight, childSpaceHeight) + mPaddingVertical
                     }
                 }
             }
@@ -211,9 +209,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
         setMeasuredDimension(
             parentWidth, when {
-                mMaxHeight > 0 -> Math.min(measureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
+                mMaxHeight > 0 -> Math.min(mMeasureHeight + paddingTop + paddingBottom, mMaxHeight.toInt())
                 mLinesMaxHeight > 0 -> mLinesMaxHeight + paddingTop + paddingBottom + mPaddingVertical
-                else -> measureHeight + paddingTop + paddingBottom
+                else -> mMeasureHeight + paddingTop + paddingBottom
             }
         )
     }
@@ -404,6 +402,23 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 val oldX = scrollX
                 val oldY = scrollY
 
+                val overscrollMode = this.overScrollMode
+                val canOverscroll = overscrollMode == 0 || overscrollMode == 1 && getScrollRangeY() > 0
+                if (this.overScrollByCompat(
+                        delX,
+                        delY,
+                        scrollX,
+                        scrollY,
+                        mMeasureWidth,
+                        mMeasureHeight,
+                        0,
+                        0,
+                        true
+                    ) && !this.hasNestedScrollingParent(0)
+                ) {
+                    this.mVelocityTracker.clear()
+                }
+
                 val scrolledDeltaX = scrollX - oldX
                 val scrolledDeltaY = scrollY - oldY
                 val unconsumedX = delX - scrolledDeltaX
@@ -415,7 +430,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                         unconsumedY,
                         mScrollOffset
                     )
-                ) run {
+                ) {
                     mLastMotionX -= mScrollOffset[0]
                     mLastMotionY -= mScrollOffset[1]
                     Log.d(
@@ -425,7 +440,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                     event.offsetLocation(0f, mScrollOffset[1].toFloat())
                     mNestedXOffset += mScrollOffset[0]
                     mNestedYOffset += mScrollOffset[1]
-                } else {
+                } else if (canOverscroll) {
                     when {
                         getScrollRangeX() > 0 -> {
                             val dx = when {
@@ -465,45 +480,58 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
                 val velocityX = -velocityTracker.getXVelocity(mActivePointerId).toInt()
                 val velocityY = -velocityTracker.getYVelocity(mActivePointerId).toInt()
 
-                when {
-                    getScrollRangeX() > 0 && Math.abs(velocityX) > mMinimumVelocity -> {
-                        val canFling = (scrollX > 0 || velocityX > 0) && (scrollX < getScrollRangeX()
-                                || velocityX < 0)
-                        if (!dispatchNestedPreFling(velocityX.toFloat(), 0f)) {
-                            dispatchNestedFling(velocityX.toFloat(), 0f, canFling)
-                            if (canFling) {
-                                mOverScroller.fling(
-                                    scrollX, scrollY, velocityX, 0, 0, Math.max(0, getScrollRangeX()), 0,
-                                    0, measuredHeight / 3, 0
-                                )
-                                ViewCompat.postInvalidateOnAnimation(this)
-                            }
-                        }
-                    }
-                    getScrollRangeY() > 0 && Math.abs(velocityY) > mMinimumVelocity -> {
-                        val canFling = (scrollY > 0 || velocityY > 0) && (scrollY < getScrollRangeY() || velocityY < 0)
-                        if (!dispatchNestedPreFling(0f, velocityY.toFloat())) {
-                            dispatchNestedFling(0f, velocityY.toFloat(), canFling)
-                            if (canFling) {
-                                mOverScroller.fling(
-                                    scrollX, scrollY, 0, velocityY, 0, 0, 0,
-                                    Math.max(0, getScrollRangeY()), 0, measuredHeight / 3
-                                )
-                                ViewCompat.postInvalidateOnAnimation(this)
-                            }
-                        }
-                    }
-                    mOverScroller.springBack(
+                if (Math.abs(velocityX) > this.mMinimumVelocity || Math.abs(velocityY) > this.mMinimumVelocity) {
+                    this.flingWithNestedDispatch(velocityX, velocityY)
+                } else if (mOverScroller.springBack(
                         this.scrollX,
                         this.scrollY,
                         0,
                         getScrollRangeX(),
                         0,
                         getScrollRangeY()
-                    ) -> {
-                        ViewCompat.postInvalidateOnAnimation(this)
-                    }
+                    )
+                ) {
+                    ViewCompat.postInvalidateOnAnimation(this)
                 }
+//                when {
+//                    getScrollRangeX() > 0 && Math.abs(velocityX) > mMinimumVelocity -> {
+//                        val canFling = (scrollX > 0 || velocityX > 0) && (scrollX < getScrollRangeX()
+//                                || velocityX < 0)
+//                        if (!dispatchNestedPreFling(velocityX.toFloat(), 0f)) {
+//                            dispatchNestedFling(velocityX.toFloat(), 0f, canFling)
+//                            if (canFling) {
+//                                mOverScroller.fling(
+//                                    scrollX, scrollY, velocityX, 0, 0, Math.max(0, getScrollRangeX()), 0,
+//                                    0, measuredHeight / 3, 0
+//                                )
+//                                ViewCompat.postInvalidateOnAnimation(this)
+//                            }
+//                        }
+//                    }
+//                    getScrollRangeY() > 0 && Math.abs(velocityY) > mMinimumVelocity -> {
+//                        val canFling = (scrollY > 0 || velocityY > 0) && (scrollY < getScrollRangeY() || velocityY < 0)
+//                        if (!dispatchNestedPreFling(0f, velocityY.toFloat())) {
+//                            dispatchNestedFling(0f, velocityY.toFloat(), canFling)
+//                            if (canFling) {
+//                                mOverScroller.fling(
+//                                    scrollX, scrollY, 0, velocityY, 0, 0, 0,
+//                                    Math.max(0, getScrollRangeY()), 0, measuredHeight / 3
+//                                )
+//                                ViewCompat.postInvalidateOnAnimation(this)
+//                            }
+//                        }
+//                    }
+//                    mOverScroller.springBack(
+//                        this.scrollX,
+//                        this.scrollY,
+//                        0,
+//                        getScrollRangeX(),
+//                        0,
+//                        getScrollRangeY()
+//                    ) -> {
+//                        ViewCompat.postInvalidateOnAnimation(this)
+//                    }
+//                }
                 recycleVelocityTracker()
                 stopNestedScroll()
                 mLastMotionX = 0f
@@ -519,6 +547,68 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
         mVelocityTracker.addMovement(event)
         return true
+    }
+
+    internal fun overScrollByCompat(
+        deltaX: Int,
+        deltaY: Int,
+        scrollX: Int,
+        scrollY: Int,
+        scrollRangeX: Int,
+        scrollRangeY: Int,
+        maxOverScrollX: Int,
+        maxOverScrollY: Int,
+        isTouchEvent: Boolean
+    ): Boolean {
+        var maxOverScrollX = maxOverScrollX
+        var maxOverScrollY = maxOverScrollY
+        val overScrollMode = this.overScrollMode
+        val canScrollHorizontal = this.getScrollRangeX() > 0
+        val canScrollVertical = this.getScrollRangeY() > 0
+        val overScrollHorizontal = overScrollMode == 0 || overScrollMode == 1 && canScrollHorizontal
+        val overScrollVertical = overScrollMode == 0 || overScrollMode == 1 && canScrollVertical
+        var newScrollX = scrollX + deltaX
+        if (!overScrollHorizontal) {
+            maxOverScrollX = 0
+        }
+
+        var newScrollY = scrollY + deltaY
+        if (!overScrollVertical) {
+            maxOverScrollY = 0
+        }
+
+        val left = -maxOverScrollX
+        val right = maxOverScrollX + scrollRangeX
+        val top = -maxOverScrollY
+        val bottom = maxOverScrollY + scrollRangeY
+        var clampedX = false
+        if (newScrollX > right) {
+            newScrollX = right
+            clampedX = true
+        } else if (newScrollX < left) {
+            newScrollX = left
+            clampedX = true
+        }
+
+        var clampedY = false
+        if (newScrollY > bottom) {
+            newScrollY = bottom
+            clampedY = true
+        } else if (newScrollY < top) {
+            newScrollY = top
+            clampedY = true
+        }
+
+        if (clampedY && !this.hasNestedScrollingParent(1)) {
+            this.mOverScroller.springBack(newScrollX, newScrollY, 0, getScrollRangeX(), 0, this.getScrollRangeY())
+        }
+
+        this.onOverScrolled(newScrollX, newScrollY, clampedX, clampedY)
+        return clampedX || clampedY
+    }
+
+    override fun onOverScrolled(scrollX: Int, scrollY: Int, clampedX: Boolean, clampedY: Boolean) {
+        super.scrollTo(scrollX, scrollY)
     }
 
 
@@ -1220,122 +1310,153 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
     }
 
     // NestedScrollingChild
-    override fun setNestedScrollingEnabled(enabled: Boolean) {
-        mNestedScrollingChildHelper.isNestedScrollingEnabled = enabled
-    }
-
-    override fun isNestedScrollingEnabled(): Boolean {
-        return mNestedScrollingChildHelper.isNestedScrollingEnabled
-    }
-
-    override fun startNestedScroll(axes: Int): Boolean {
-        return mNestedScrollingChildHelper.startNestedScroll(axes)
-    }
-
-    override fun startNestedScroll(axes: Int, type: Int): Boolean {
-        return mNestedScrollingChildHelper.startNestedScroll(axes, type)
-    }
-
-    override fun stopNestedScroll() {
-        mNestedScrollingChildHelper.stopNestedScroll()
+    public override fun startNestedScroll(axes: Int, type: Int): Boolean {
+        return this.mNestedScrollingChildHelper.startNestedScroll(axes, type)
     }
 
     override fun stopNestedScroll(type: Int) {
-        mNestedScrollingChildHelper.stopNestedScroll(type)
-    }
-
-    override fun hasNestedScrollingParent(): Boolean {
-        return mNestedScrollingChildHelper.hasNestedScrollingParent()
+        this.mNestedScrollingChildHelper.stopNestedScroll(type)
     }
 
     override fun hasNestedScrollingParent(type: Int): Boolean {
-        return mNestedScrollingChildHelper.hasNestedScrollingParent(type)
+        return this.mNestedScrollingChildHelper.hasNestedScrollingParent(type)
     }
 
     override fun dispatchNestedScroll(
-        dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int,
-        dyUnconsumed: Int, offsetInWindow: IntArray?
+        dxConsumed: Int,
+        dyConsumed: Int,
+        dxUnconsumed: Int,
+        dyUnconsumed: Int,
+        offsetInWindow: IntArray?,
+        type: Int
     ): Boolean {
-        return mNestedScrollingChildHelper.dispatchNestedScroll(
-            dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed,
-            offsetInWindow
+        return this.mNestedScrollingChildHelper.dispatchNestedScroll(
+            dxConsumed,
+            dyConsumed,
+            dxUnconsumed,
+            dyUnconsumed,
+            offsetInWindow,
+            type
         )
-    }
-
-    override fun dispatchNestedScroll(
-        dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int,
-        dyUnconsumed: Int, offsetInWindow: IntArray?, type: Int
-    ): Boolean {
-        return mNestedScrollingChildHelper.dispatchNestedScroll(
-            dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed,
-            offsetInWindow, type
-        )
-    }
-
-    override fun dispatchNestedPreScroll(dx: Int, dy: Int, consumed: IntArray?, offsetInWindow: IntArray?): Boolean {
-        return mNestedScrollingChildHelper.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow)
     }
 
     override fun dispatchNestedPreScroll(
-        dx: Int, dy: Int, consumed: IntArray?, offsetInWindow: IntArray?,
+        dx: Int,
+        dy: Int,
+        consumed: IntArray?,
+        offsetInWindow: IntArray?,
         type: Int
     ): Boolean {
-        return mNestedScrollingChildHelper.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow, type)
+        return this.mNestedScrollingChildHelper.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow, type)
+    }
+
+    override fun setNestedScrollingEnabled(enabled: Boolean) {
+        this.mNestedScrollingChildHelper.isNestedScrollingEnabled = enabled
+    }
+
+    override fun isNestedScrollingEnabled(): Boolean {
+        return this.mNestedScrollingChildHelper.isNestedScrollingEnabled
+    }
+
+    override fun startNestedScroll(axes: Int): Boolean {
+        return this.startNestedScroll(axes, 0)
+    }
+
+    override fun stopNestedScroll() {
+        this.stopNestedScroll(0)
+    }
+
+    override fun hasNestedScrollingParent(): Boolean {
+        return this.hasNestedScrollingParent(0)
+    }
+
+    override fun dispatchNestedScroll(
+        dxConsumed: Int,
+        dyConsumed: Int,
+        dxUnconsumed: Int,
+        dyUnconsumed: Int,
+        offsetInWindow: IntArray?
+    ): Boolean {
+        return this.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow, 0)
+    }
+
+    override fun dispatchNestedPreScroll(dx: Int, dy: Int, consumed: IntArray?, offsetInWindow: IntArray?): Boolean {
+        return this.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow, 0)
     }
 
     override fun dispatchNestedFling(velocityX: Float, velocityY: Float, consumed: Boolean): Boolean {
-        return mNestedScrollingChildHelper.dispatchNestedFling(velocityX, velocityY, consumed)
+        return this.mNestedScrollingChildHelper.dispatchNestedFling(velocityX, velocityY, consumed)
     }
 
     override fun dispatchNestedPreFling(velocityX: Float, velocityY: Float): Boolean {
-        return mNestedScrollingChildHelper.dispatchNestedPreFling(velocityX, velocityY)
+        return this.mNestedScrollingChildHelper.dispatchNestedPreFling(velocityX, velocityY)
     }
 
     // NestedScrollingParent
-
-    override fun onStartNestedScroll(child: View, target: View, nestedScrollAxes: Int): Boolean {
-        return nestedScrollAxes and ViewCompat.SCROLL_AXIS_VERTICAL != 0
+    override fun onStartNestedScroll(child: View, target: View, axes: Int, type: Int): Boolean {
+        return axes and 2 != 0
     }
 
-    override fun onNestedScrollAccepted(child: View, target: View, nestedScrollAxes: Int) {
-        mNestedScrollingParentHelper.onNestedScrollAccepted(child, target, nestedScrollAxes)
-        startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL)
+    override fun onNestedScrollAccepted(child: View, target: View, axes: Int, type: Int) {
+        this.mNestedScrollingParentHelper.onNestedScrollAccepted(child, target, axes, type)
+        this.startNestedScroll(2, type)
     }
 
-    override fun onStopNestedScroll(target: View) {
-        mNestedScrollingParentHelper.onStopNestedScroll(target)
-        stopNestedScroll()
+    override fun onStopNestedScroll(target: View, type: Int) {
+        this.mNestedScrollingParentHelper.onStopNestedScroll(target, type)
+        this.stopNestedScroll(type)
     }
 
     override fun onNestedScroll(
-        target: View, dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int,
-        dyUnconsumed: Int
+        target: View,
+        dxConsumed: Int,
+        dyConsumed: Int,
+        dxUnconsumed: Int,
+        dyUnconsumed: Int,
+        type: Int
     ) {
-        val oldScrollY = scrollY
-        scrollBy(0, dyUnconsumed)
-        val myConsumed = scrollY - oldScrollY
+        val oldScrollY = this.scrollY
+        this.scrollBy(0, dyUnconsumed)
+        val myConsumed = this.scrollY - oldScrollY
         val myUnconsumed = dyUnconsumed - myConsumed
-        dispatchNestedScroll(0, myConsumed, 0, myUnconsumed, null)
+        this.dispatchNestedScroll(0, myConsumed, 0, myUnconsumed, null as IntArray?, type)
+    }
+
+    override fun onNestedPreScroll(target: View, dx: Int, dy: Int, consumed: IntArray, type: Int) {
+        this.dispatchNestedPreScroll(dx, dy, consumed, null as IntArray?, type)
+    }
+
+    override fun onStartNestedScroll(child: View, target: View, nestedScrollAxes: Int): Boolean {
+        return this.onStartNestedScroll(child, target, nestedScrollAxes, 0)
+    }
+
+    override fun onNestedScrollAccepted(child: View, target: View, nestedScrollAxes: Int) {
+        this.onNestedScrollAccepted(child, target, nestedScrollAxes, 0)
+    }
+
+    override fun onStopNestedScroll(target: View) {
+        this.onStopNestedScroll(target, 0)
+    }
+
+    override fun onNestedScroll(target: View, dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int, dyUnconsumed: Int) {
+        this.onNestedScroll(target, dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, 0)
     }
 
     override fun onNestedPreScroll(target: View, dx: Int, dy: Int, consumed: IntArray) {
-        dispatchNestedPreScroll(dx, dy, consumed, null)
+        this.onNestedPreScroll(target, dx, dy, consumed, 0)
     }
 
     override fun onNestedFling(target: View, velocityX: Float, velocityY: Float, consumed: Boolean): Boolean {
-        if (!consumed) {
-            flingWithNestedDispatch(velocityX.toInt(), velocityY.toInt())
-            return true
+        return if (!consumed) {
+            this.flingWithNestedDispatch(velocityX.toInt(), velocityY.toInt())
+            true
+        } else {
+            false
         }
-        return false
     }
 
     override fun onNestedPreFling(target: View, velocityX: Float, velocityY: Float): Boolean {
-        return dispatchNestedPreFling(velocityX, velocityY)
-    }
-
-    override fun getNestedScrollAxes(): Int {
-        return mNestedScrollingParentHelper.nestedScrollAxes
+        return this.dispatchNestedPreFling(velocityX, velocityY)
     }
 
     private fun flingWithNestedDispatch(velocityX: Int, velocityY: Int) {
@@ -1359,7 +1480,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent, NestedScrollingChil
 
     fun fling(velocityX: Int, velocityY: Int) {
         if (childCount > 0) {
-            startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH)
+            startNestedScroll(
+                if (mMode == MODE.HORIZONL) {
+                    ViewCompat.SCROLL_AXIS_HORIZONTAL
+                } else {
+                    ViewCompat.SCROLL_AXIS_VERTICAL
+                }, ViewCompat.TYPE_NON_TOUCH
+            )
             mOverScroller.fling(
                 scrollX, scrollY, velocityX, velocityY, 0, Math.max(0, getScrollRangeX()), 0,
                 Math.max(0, getScrollRangeY()), measuredHeight / 3, measuredHeight / 3
