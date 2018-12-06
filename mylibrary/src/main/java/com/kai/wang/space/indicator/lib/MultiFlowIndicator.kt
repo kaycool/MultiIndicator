@@ -326,7 +326,9 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
 //                    dispatchTouchEvent(obtain)
 //                }
 
-                mIsNeedIntercept = true
+                if (Math.abs(mDeltaX) > mTouchSlop || Math.abs(mDeltaY) > mTouchSlop) {
+                    mIsNeedIntercept = true
+                }
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -344,7 +346,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
-        return isEnabled
+        return mIsNeedIntercept
     }
 
     override fun performClick(): Boolean {
@@ -413,19 +415,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                         delY = 0
                     }
 
-                    val overscrollMode = this.overScrollMode
-                    val canOverscroll = overscrollMode == 0 || overscrollMode == 1 && getScrollRangeY() > 0
                     if (this.overScrollByCompat(
-                            delX,
-                            delY,
-                            scrollX,
-                            scrollY,
-                            mMeasureWidth,
-                            mMeasureHeight,
-                            0,
-                            0,
-                            true
-                        ) && !this.hasNestedScrollingParent(0)
+                            delX, delY, scrollX, scrollY, mMeasureWidth,
+                            mMeasureHeight, 0, 0, true
+                        )
+                        && !this.hasNestedScrollingParent(0)
                     ) {
                         this.mVelocityTracker.clear()
                     }
@@ -434,14 +428,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                     val scrolledDeltaY = scrollY - oldY
                     val unconsumedX = delX - scrolledDeltaX
                     val unconsumedY = delY - scrolledDeltaY
-                    if (dispatchNestedScroll(
-                            scrolledDeltaX,
-                            scrolledDeltaY,
-                            unconsumedX,
-                            unconsumedY,
-                            mScrollOffset
-                        )
-                    ) {
+                    if (dispatchNestedScroll(scrolledDeltaX, scrolledDeltaY, unconsumedX, unconsumedY, mScrollOffset)) {
                         mLastMotionX -= mScrollOffset[0]
                         mLastMotionY -= mScrollOffset[1]
                         Log.d(
@@ -451,8 +438,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                         event.offsetLocation(0f, mScrollOffset[1].toFloat())
                         mNestedXOffset += mScrollOffset[0]
                         mNestedYOffset += mScrollOffset[1]
-                    } else if (canOverscroll) {
-
                     }
                     Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_MOVE ,delX=$delX , delY = $delY")
 
@@ -1525,17 +1510,25 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
 
     fun fling(velocityX: Int, velocityY: Int) {
         if (childCount > 0) {
-            startNestedScroll(
-                if (mMode == MODE.HORIZONL) {
-                    ViewCompat.SCROLL_AXIS_HORIZONTAL
-                } else {
-                    ViewCompat.SCROLL_AXIS_VERTICAL
-                }, ViewCompat.TYPE_NON_TOUCH
-            )
-            mOverScroller.fling(
-                scrollX, scrollY, velocityX, velocityY, 0, Math.max(0, getScrollRangeX()), 0,
-                Math.max(0, getScrollRangeY()), 0, 0
-            )
+            when (mMode) {
+                MODE.HORIZONL -> {
+                    startNestedScroll(ViewCompat.SCROLL_AXIS_HORIZONTAL, ViewCompat.TYPE_NON_TOUCH)
+                    mOverScroller.fling(
+                        scrollX, scrollY, velocityX, 0, -2147483648, 2147483647,
+                        0,
+                        0, 0, 0
+                    )
+                }
+                else -> {
+                    startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH)
+                    mOverScroller.fling(
+                        scrollX, scrollY, 0, velocityY, 0, 0,
+                        -2147483648,
+                        2147483647, 0, 0
+                    )
+                }
+            }
+
             this.mLastScrollerX = this.scrollX
             this.mLastScrollerY = this.scrollY
             ViewCompat.postInvalidateOnAnimation(this)
