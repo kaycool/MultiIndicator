@@ -105,7 +105,7 @@ class MultiFlowLayout : ViewGroup, OnDataChangedListener {
             mMeasureWidth += childSpaceWidth
             if (mMeasureWidth + paddingRight + paddingLeft > parentWidth) {
                 mMeasureWidth = childSpaceWidth
-                mMeasureHeight += lineHeight + childSpaceHeight
+                mMeasureHeight += lineHeight
                 if (lines < mMaxLines) {
                     mLinesMaxHeight += if (mMaxLines - lines < 1) {
                         (lineHeight * (mMaxLines - lines)).toInt()
@@ -116,6 +116,7 @@ class MultiFlowLayout : ViewGroup, OnDataChangedListener {
                 lineHeight = 0
                 lines++
             }
+
             lineHeight = Math.max(lineHeight, childSpaceHeight)
 
             if (i == childCount - 1) {

@@ -180,7 +180,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                     mMeasureWidth += childSpaceWidth
                     if (mMeasureWidth + paddingRight + paddingLeft > parentWidth) {
                         mMeasureWidth = childSpaceWidth
-                        mMeasureHeight += lineHeight + childSpaceHeight
+                        mMeasureHeight += lineHeight
                         if (lines < mMaxLines) {
                             mLinesMaxHeight += if (mMaxLines - lines < 1) {
                                 (lineHeight * (mMaxLines - lines)).toInt()
