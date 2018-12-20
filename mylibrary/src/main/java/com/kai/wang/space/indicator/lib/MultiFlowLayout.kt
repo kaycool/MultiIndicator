@@ -57,7 +57,7 @@ class MultiFlowLayout : ViewGroup, OnDataChangedListener {
     private var mPaddingHorizontal = 0
     private var mPaddingVertical = 0
     private var mMaxHeight = -1f
-    private var mMaxLines = -1
+    private var mMaxLines = -1f
     private var mMaxSelectedCount = -1
     private var mMaxSelectedTips = ""
     private var mTextSelectedColor = Color.RED
@@ -209,7 +209,7 @@ class MultiFlowLayout : ViewGroup, OnDataChangedListener {
             mPaddingVertical = a.getDimensionPixelOffset(R.styleable.MultiFlowLayout_multi_flow_padding_vertical,
                 context.resources.getDimensionPixelOffset(R.dimen.dimen_5))
             mMaxHeight = a.getDimension(R.styleable.MultiFlowLayout_multi_flow_max_height, -1f)
-            mMaxLines = a.getInt(R.styleable.MultiFlowLayout_multi_flow_max_lines, -1)
+            mMaxLines = a.getFloat(R.styleable.MultiFlowLayout_multi_flow_max_lines, -1f)
             mMaxSelectedCount = a.getInt(R.styleable.MultiFlowLayout_multi_max_selected_count, -1)
             mMaxSelectedTips = a.getString(R.styleable.MultiFlowLayout_multi_max_selected_Tips) ?: ""
             a.recycle()
