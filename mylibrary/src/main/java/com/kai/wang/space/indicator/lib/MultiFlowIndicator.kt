@@ -147,7 +147,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
         var lines = 0
         var mLinesMaxHeight = 0
         when (mMode) {
-            MultiFlowLayout.MODE.HORIZONL -> {
+            MultiFlowIndicator.MODE.HORIZONL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     measureChild(childView,
@@ -166,7 +166,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                     }
                 }
             }
-            MultiFlowLayout.MODE.VERTICAL -> {
+            MultiFlowIndicator.MODE.VERTICAL -> {
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     measureChild(childView,
@@ -435,6 +435,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 }
                 recycleVelocityTracker()
                 stopNestedScroll()
+
                 mLastMotionX = 0f
                 mLastMotionY = 0f
                 mNestedXOffset = 0
@@ -1054,11 +1055,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 view.layoutParams = generateDefaultLayoutParams()
                 addView(view)
 
-                view.setOnClickListener {
-                    if (mItemClickCallback == null || mItemClickCallback?.callback(index) == true) {
-                        this.mViewPager.setCurrentItem(index, false)
-                    }
-                }
+                //                view.setOnClickListener {
+                //                    if (mItemClickCallback == null || mItemClickCallback?.callback(index) == true) {
+                //                        this.mViewPager.setCurrentItem(index, false)
+                //                    }
+                //                }
             }
         }
     }
