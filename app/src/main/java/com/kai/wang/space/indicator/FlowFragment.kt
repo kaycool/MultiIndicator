@@ -18,8 +18,7 @@ import kotlinx.android.synthetic.main.fragment_flow.*
  */
 class FlowFragment : Fragment() {
     private val mFlows by lazy {
-        mutableListOf(
-            "标签一",
+        mutableListOf("标签一",
             "标签二222222222标签二222222222标签二222222222标签二222222222",
             "标签三",
             "标签四标签十五22222222222标签十五22222222222标签十五22222222222标签十五22222222222标签十五22222222222标签十五22222222222标签十五22222222222标签十五22222222222标签十五22222222222标签十五22222222222",
@@ -49,30 +48,25 @@ class FlowFragment : Fragment() {
             "标签二十八2222",
             "标签二十九22222",
             "标签三十2222",
-            "标签三十一"
-        )
+            "标签三十一")
     }
 
     private val mAdapter = object : MultiFlowAdapter<String>(mFlows) {
-        override fun onSelected(
-            view: View,
-            position: Int,
-            selectTextSize: Float,
-            selectTextColor: Int,
-            selectIconColor: Int
-        ) {
+        override fun onSelected(view: View,
+                                position: Int,
+                                selectTextSize: Float,
+                                selectTextColor: Int,
+                                selectIconColor: Int) {
             (view as TextView)?.apply {
                 this.setTextColor(Color.RED)
             }
         }
 
-        override fun unSelected(
-            view: View,
-            position: Int,
-            unSelectTextSize: Float,
-            unSelectTextColor: Int,
-            unSelectIconColor: Int
-        ) {
+        override fun unSelected(view: View,
+                                position: Int,
+                                unSelectTextSize: Float,
+                                unSelectTextColor: Int,
+                                unSelectIconColor: Int) {
             (view as TextView)?.apply {
                 this.setTextColor(Color.GRAY)
             }
@@ -112,9 +106,6 @@ class FlowFragment : Fragment() {
             }
 
         })
-        btnMode.setOnClickListener {
-            flowLayout.changedMode()
-        }
         btnAdd.setOnClickListener {
             mFlows.add(1, "11111111")
             mFlows.add(2, "22222222")

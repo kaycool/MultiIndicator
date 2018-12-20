@@ -223,11 +223,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 for (i in 0 until childCount) {
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
-                    left += layoutParams.leftMargin
+                    left += layoutParams.leftMargin + mPaddingHorizontal
                     if (i == 0) {
                         left += paddingLeft
                     }
-                    top = layoutParams.topMargin + paddingTop
+                    top = layoutParams.topMargin + paddingTop + mPaddingVertical
                     right = left + childView.measuredWidth
                     bottom = top + childView.measuredHeight
                     childView.layout(left, top, right, bottom)
@@ -239,26 +239,26 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                     val childView = getChildAt(i)
                     val layoutParams = childView.layoutParams as MarginLayoutParams
 
-                    left += layoutParams.leftMargin
+                    left += layoutParams.leftMargin + mPaddingHorizontal
                     if (i == 0) {
                         left += paddingLeft
                     }
                     right = left + childView.measuredWidth
                     if (right + paddingRight > measuredWidth) {
-                        left = layoutParams.leftMargin + paddingLeft
+                        left = layoutParams.leftMargin + paddingLeft + mPaddingHorizontal
                         right = left + childView.measuredWidth
                         bottom += lineHeight
                         lineHeight = 0
                     }
                     if (i == 0) {
-                        bottom += paddingTop
+                        bottom += paddingTop + mPaddingVertical
                     }
                     top = bottom + layoutParams.topMargin
 
                     childView.layout(left, top, right, top + childView.measuredHeight)
                     left = right + layoutParams.rightMargin
                     lineHeight = Math.max(lineHeight,
-                        childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin)
+                        childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin + mPaddingVertical)
                 }
             }
             else -> {
@@ -294,9 +294,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
             MotionEvent.ACTION_DOWN -> {
                 this.mOverScroller.computeScrollOffset()
                 this.mIsNeedIntercept = !this.mOverScroller.isFinished
-
-                startNestedScroll(ViewCompat.SCROLL_AXIS_HORIZONTAL, ViewCompat.TYPE_TOUCH)
-                startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_TOUCH)
+                this.startNestedScroll(2, 0)
             }
             MotionEvent.ACTION_MOVE -> {
                 if (Math.abs(mDeltaX) > mTouchSlop || Math.abs(mDeltaY) > mTouchSlop) {
@@ -305,13 +303,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 }
             }
 
-            MotionEvent.ACTION_UP -> {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 Log.d(TAG, "dispatchTouchEvent ===== MotionEvent.action = ACTION_UP,ACTION_CANCEL")
                 mIsNeedIntercept = false
                 this.stopNestedScroll(0)
             }
 
-            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
+            MotionEvent.ACTION_POINTER_UP -> {
             }
 
             else -> {
@@ -325,20 +323,12 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val vtev = MotionEvent.obtain(event)
         val pointerIndex = event.actionIndex
         if (pointerIndex < 0) {
             recycleVelocityTracker()
             return false
         }
         initVelocityTrackerIfNotExists()
-
-        if (event.action == MotionEvent.ACTION_DOWN) {
-            mNestedXOffset = 0
-            mNestedYOffset = 0
-        }
-
-        vtev.offsetLocation(mNestedXOffset.toFloat(), mNestedYOffset.toFloat())
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
                 Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_DOWN")
@@ -346,9 +336,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 mLastMotionY = event.getY(pointerIndex)
 
                 initVelocityTracker()
+                mNestedXOffset = 0
+                mNestedYOffset = 0
+                event.offsetLocation(mNestedXOffset.toFloat(), mNestedYOffset.toFloat())
+
                 mActivePointerId = event.getPointerId(0)
-                startNestedScroll(ViewCompat.SCROLL_AXIS_HORIZONTAL, ViewCompat.TYPE_TOUCH)
-                startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_TOUCH)
+
+                this.startNestedScroll(2, 0)
             }
             MotionEvent.ACTION_MOVE -> {
                 mNestedXOffset = 0
@@ -365,15 +359,13 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                         "dispatchNestedPreScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}")
                     delX -= mScrollConsumed[0]
                     delY -= mScrollConsumed[1]
-                    vtev.offsetLocation(mScrollOffset[0].toFloat(), mScrollOffset[1].toFloat())
+                    event.offsetLocation(mScrollOffset[0].toFloat(), mScrollOffset[1].toFloat())
                     mNestedXOffset += mScrollOffset[0]
                     mNestedYOffset += mScrollOffset[1]
                 }
 
                 if (Math.abs(delX) > mTouchSlop || Math.abs(delY) > mTouchSlop) {
                     parent?.requestDisallowInterceptTouchEvent(true)
-                    mLastMotionX = moveX - mScrollOffset[0]
-                    mLastMotionY = moveY - mScrollOffset[1]
                     val oldX = scrollX
                     val oldY = scrollY
 
@@ -406,12 +398,14 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                         mLastMotionY -= mScrollOffset[1]
                         Log.d(TAG,
                             "dispatchNestedScroll ,mScrollConsumedX=${mScrollConsumed[0]},mScrollConsumedY=${mScrollConsumed[1]}")
-                        vtev.offsetLocation(mScrollOffset[0].toFloat(), mScrollOffset[1].toFloat())
+                        event.offsetLocation(0f, mScrollOffset[1].toFloat())
                         mNestedXOffset += mScrollOffset[0]
                         mNestedYOffset += mScrollOffset[1]
                     }
                     Log.d(TAG, "onTouchEvent ===== MotionEvent.action = ACTION_MOVE ,delX=$delX , delY = $delY")
 
+                    mLastMotionX = moveX - mScrollOffset[0]
+                    mLastMotionY = moveY - mScrollOffset[1]
                 }
 
             }
@@ -435,7 +429,6 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 }
                 recycleVelocityTracker()
                 stopNestedScroll()
-
                 mLastMotionX = 0f
                 mLastMotionY = 0f
                 mNestedXOffset = 0
@@ -447,10 +440,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
             }
         }
 
-        if (this::mVelocityTracker.isInitialized) {
-            this.mVelocityTracker.addMovement(vtev)
-        }
-        vtev.recycle()
+        mVelocityTracker.addMovement(event)
         return true
     }
 
@@ -1054,12 +1044,11 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                 val view = it.getView(this, index)
                 view.layoutParams = generateDefaultLayoutParams()
                 addView(view)
-
-                //                view.setOnClickListener {
-                //                    if (mItemClickCallback == null || mItemClickCallback?.callback(index) == true) {
-                //                        this.mViewPager.setCurrentItem(index, false)
-                //                    }
-                //                }
+                view.setOnClickListener {
+                    if (mItemClickCallback == null || mItemClickCallback?.callback(index) == true) {
+                        this.mViewPager.setCurrentItem(index, false)
+                    }
+                }
             }
         }
     }
@@ -1253,8 +1242,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
 
     override fun onNestedScrollAccepted(child: View, target: View, axes: Int, type: Int) {
         this.mNestedScrollingParentHelper.onNestedScrollAccepted(child, target, axes, type)
-        this.startNestedScroll(ViewCompat.SCROLL_AXIS_HORIZONTAL, type)
-        this.startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, type)
+        this.startNestedScroll(2, type)
     }
 
     override fun onStopNestedScroll(target: View, type: Int) {

@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.kai.wang.space.indicator.lib.MultiFlowAdapter
+import com.kai.wang.space.indicator.lib.MultiFlowIndicator
 import kotlinx.android.synthetic.main.activity_test.*
 
 /**
@@ -141,8 +142,9 @@ class IndicatorActivity : AppCompatActivity() {
 
         })
         spaceFlowIndicator.setViewPager(viewPager)
-        //        spaceIndicator.setViewPager(viewPager)
+        spaceFlowIndicator.setItemClickCallback(object :MultiFlowIndicator.Companion.ItemClickCallback{
 
+        })
     }
 
 

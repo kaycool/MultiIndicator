@@ -143,26 +143,26 @@ class MultiFlowLayout : ViewGroup, OnDataChangedListener {
             val childView = getChildAt(i)
             val layoutParams = childView.layoutParams as MarginLayoutParams
 
-            left += layoutParams.leftMargin
+            left += layoutParams.leftMargin + mPaddingHorizontal
             if (i == 0) {
                 left += paddingLeft
             }
             right = left + childView.measuredWidth
             if (right + paddingRight > measuredWidth) {
-                left = layoutParams.leftMargin + paddingLeft
+                left = layoutParams.leftMargin + paddingLeft + mPaddingHorizontal
                 right = left + childView.measuredWidth
                 bottom += lineHeight
                 lineHeight = 0
             }
             if (i == 0) {
-                bottom += paddingTop
+                bottom += paddingTop + mPaddingVertical
             }
             top = bottom + layoutParams.topMargin
 
             childView.layout(left, top, right, top + childView.measuredHeight)
             left = right + layoutParams.rightMargin
-            lineHeight =
-                    Math.max(lineHeight, childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin)
+            lineHeight = Math.max(lineHeight,
+                childView.measuredHeight + layoutParams.topMargin + layoutParams.bottomMargin + mPaddingVertical)
         }
     }
 

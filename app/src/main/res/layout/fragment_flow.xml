@@ -8,7 +8,6 @@
             android:id="@+id/flowLayout"
             android:layout_centerVertical="true"
             android:background="@android:color/black"
-            android:padding="@dimen/dimen_10"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/llBtn"
