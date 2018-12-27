@@ -1,4 +1,4 @@
-# MultiIndicator(粗糙版本)
+# MultiIndicator(1.0.0)
 
 1. Add it in your root build.gradle at the end of repositories:
 
@@ -92,4 +92,8 @@
 7. setViewPager
 
      	spaceFlowIndicator.setViewPager(viewPager)
+
+
+![效果如下所示：](https://github.com/kaycool/MultiIndicator/blob/master/capture/device-2018-12-27-144948.gif)
+
 
