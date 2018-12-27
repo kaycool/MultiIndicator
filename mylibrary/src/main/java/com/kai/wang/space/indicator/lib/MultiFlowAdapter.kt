@@ -10,7 +10,6 @@ import java.io.Serializable
  * @des  $des
  */
 abstract class MultiFlowAdapter<out T>(val mutiDatas: MutableList<out T>) : Serializable {
-    private val mMutiDatas = mutiDatas
     private var mOnDataChangedListener: OnDataChangedListener? = null
 
     fun setOnDataChangedListener(listener: OnDataChangedListener) {
@@ -19,25 +18,21 @@ abstract class MultiFlowAdapter<out T>(val mutiDatas: MutableList<out T>) : Seri
 
     abstract fun getView(parent: ViewGroup, position: Int): View
 
-    abstract fun onSelected(
-        view: View,
-        position: Int,
-        selectTextSize: Float,
-        selectTextColor: Int,
-        selectIconColor: Int
-    )
+    abstract fun onSelected(view: View,
+                            position: Int,
+                            selectTextSize: Float,
+                            selectTextColor: Int,
+                            selectIconColor: Int)
 
-    abstract fun unSelected(
-        view: View,
-        position: Int,
-        unSelectTextSize: Float,
-        unSelectTextColor: Int,
-        unSelectIconColor: Int
-    )
+    abstract fun unSelected(view: View,
+                            position: Int,
+                            unSelectTextSize: Float,
+                            unSelectTextColor: Int,
+                            unSelectIconColor: Int)
 
-    fun getItem(position: Int): T = mMutiDatas[position]
+    fun getItem(position: Int): T = mutiDatas[position]
 
-    fun getItemCount(): Int = mMutiDatas.size
+    fun getItemCount(): Int = mutiDatas.size
 
     fun notifyDataChanged() {
         mOnDataChangedListener?.notifyChanged()

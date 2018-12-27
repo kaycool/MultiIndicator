@@ -960,8 +960,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                             scrollX + dx > getScrollRangeX() -> getScrollRangeX() - scrollX
                             else -> dx - scrollX
                         }
-                        mOverScroller.startScroll(scrollX, scrollY, dx, -scrollY)
-                        ViewCompat.postInvalidateOnAnimation(this)
+                        overScrollByCompat(dx, 0, scrollX, scrollY, getScrollRangeX(), getScrollRangeY(), 0, 0, false)
                     }
                 }
                 MultiFlowIndicator.MODE.VERTICAL -> {
@@ -974,8 +973,7 @@ class MultiFlowIndicator : ViewGroup, NestedScrollingParent2, NestedScrollingChi
                             scrollY + dy > getScrollRangeY() -> getScrollRangeY() - scrollY
                             else -> dy - scrollY
                         }
-                        mOverScroller.startScroll(scrollX, scrollY, -scrollX, dy)
-                        ViewCompat.postInvalidateOnAnimation(this)
+                        overScrollByCompat(0, dy, scrollX, scrollY, getScrollRangeX(), getScrollRangeY(), 0, 0, false)
                     }
                 }
                 else -> {

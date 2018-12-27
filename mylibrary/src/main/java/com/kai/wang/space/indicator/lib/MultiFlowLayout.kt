@@ -234,6 +234,8 @@ class MultiFlowLayout : ViewGroup, OnDataChangedListener {
 
                 if (mSelectedView.contains(index)) {
                     this.onSelected(view, index, mTextSelectedSize, mTextSelectedColor, mIconSelectedColor)
+                } else {
+                    this.unSelected(view, index, mTextUnSelectedSize, mTextUnSelectedColor, mIconUnSelectedColor)
                 }
 
                 view.setOnClickListener {
